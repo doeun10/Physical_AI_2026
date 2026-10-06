@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 브라우저 탭에 보이는 제목 -->
+  <title>PawFeeder AI | 얼굴로 알아보는 피지컬 AI 반려동물 급식기</title>
+  <meta name="description" content="목걸이 태그 없이 카메라로 반려동물을 식별해 개체별 맞춤 사료를 정량 급여하고, 실제 섭취량을 자동 기록하는 피지컬 AI 급식기">
+
+  <!-- 글꼴: Pretendard(한글) + Plus Jakarta Sans(영문), 아이콘: Material Symbols -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=block">
+
+  <style>
+    /* ===== 색상 설정: 이 값만 바꿔도 전체 분위기가 바뀝니다 ===== */
+    :root {
+      --bg: #F9F9FE;          /* 기본 배경 */
+      --bg-alt: #F0F3FD;      /* 번갈아 쓰는 섹션 배경 */
+      --surface: #FFFFFF;     /* 카드 */
+      --ink: #1B1E24;         /* 기본 글자 */
+      --muted: #5F5458;       /* 보조 글자 */
+      --line: #E4E6EF;        /* 구분선 */
+      --accent: #F7744F;      /* 강조(코럴) */
+      --accent-deep: #B23A1E; /* 진한 강조 */
+      --green: #2E6B4A;       /* 보조 강조(그린) */
+      --green-soft: #E9F7EE;
+      --chip: #E6E9F4;
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Plus Jakarta Sans", "Pretendard", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.65;
+      word-break: keep-all;
+    }
+
+    img { max-width: 100%; display: block; }
+    a { color: inherit; text-decoration: none; }
+    a:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+    .icon {
+      font-family: "Material Symbols Outlined";
+      font-weight: normal; font-style: normal; line-height: 1;
+      font-size: 20px; display: inline-block; vertical-align: middle;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+    /* ----- 공통 섹션 ----- */
+    section { padding: 104px 0; scroll-margin-top: 76px; }
+    section.alt { background: var(--bg-alt); }
+    .eyebrow {
+      font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--accent-deep); margin-bottom: 12px;
+    }
+    .eyebrow.green { color: var(--green); }
+    h2 {
+      font-size: clamp(1.8rem, 3.6vw, 2.6rem); font-weight: 800;
+      line-height: 1.25; letter-spacing: -0.02em;
+    }
+    .center { text-align: center; }
+    .center .lead { margin: 16px auto 0; }
+    .lead { color: var(--muted); max-width: 40em; font-size: 1.05rem; }
+    .split-head {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      gap: 32px; margin-bottom: 56px;
+    }
+    .split-head .lead { max-width: 28em; }
+
+    .card {
+      background: var(--surface); border-radius: var(--radius);
+      box-shadow: 0 2px 10px rgba(30, 36, 60, 0.04);
+    }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+
+    .button {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 16px 28px; border-radius: 999px; border: 0;
+      font: inherit; font-weight: 700; cursor: pointer;
+      background: var(--accent); color: #fff;
+      box-shadow: 0 8px 20px rgba(247, 116, 79, 0.3);
+      transition: transform .15s ease, background .15s ease;
+    }
+    .button:hover { background: #EE6540; transform: translateY(-1px); }
+    .button.ghost { background: var(--surface); color: var(--ink); box-shadow: 0 2px 10px rgba(30, 36, 60, 0.06); }
+    .button.ghost .icon { color: var(--accent-deep); }
+
+    /* ----- 상단 메뉴 ----- */
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav { display: flex; justify-content: space-between; align-items: center; height: 76px; gap: 24px; }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.3rem; letter-spacing: -0.02em; }
+    .logo .mark {
+      width: 34px; height: 34px; border-radius: 8px; background: #FFF1EC;
+      display: flex; align-items: center; justify-content: center; color: var(--accent);
+    }
+    .nav ul { display: flex; gap: 28px; list-style: none; }
+    .nav ul a { color: #3A3D45; font-weight: 600; font-size: 0.95rem; }
+    .nav ul a:hover { color: var(--accent-deep); }
+    .nav .button { padding: 10px 22px; box-shadow: none; }
+
+    /* ----- 첫 화면 ----- */
+    .hero { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; padding-top: 48px; padding-bottom: 96px; }
+    .hero > *, .anatomy > *, .specs > * { min-width: 0; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 8px 16px; border-radius: 999px; background: var(--surface);
+      font-size: 0.85rem; color: var(--muted);
+      box-shadow: 0 2px 10px rgba(30, 36, 60, 0.05);
+    }
+    .badge strong { color: var(--green); font-weight: 700; letter-spacing: 0.02em; }
+    .badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 6px; }
+    .badge .sep { width: 1px; height: 14px; background: var(--line); }
+    .hero h1 {
+      margin-top: 32px;
+      font-size: clamp(2.3rem, 4.4vw, 3.7rem);
+      font-weight: 800; line-height: 1.25; letter-spacing: -0.03em;
+    }
+    .hero h1 em { font-style: normal; color: var(--accent); white-space: nowrap; }
+    .hero .tagline { margin-top: 24px; font-size: 1.12rem; color: var(--muted); max-width: 32em; }
+    .hero .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 36px; }
+    .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 40px; }
+    .stats div { background: var(--bg-alt); border-radius: 12px; padding: 12px 14px; font-size: 0.85rem; flex: 0 1 170px; }
+    .stats b { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 1.05rem; color: var(--green); }
+    .stats b .icon { font-size: 18px; }
+    .stats div:nth-child(2) b { color: var(--accent-deep); }
+    .stats-note { margin-top: 10px; font-size: 0.78rem; color: var(--muted); }
+
+    .hero-visual { position: relative; }
+    .hero-visual img {
+      width: 100%; aspect-ratio: 4 / 3; object-fit: cover;
+      border-radius: 24px; box-shadow: 0 24px 60px rgba(30, 36, 60, 0.18);
+    }
+    .float {
+      position: absolute; display: flex; align-items: center; gap: 12px;
+      background: rgba(255, 255, 255, 0.93); backdrop-filter: blur(6px);
+      border-radius: 16px; padding: 12px 16px;
+      box-shadow: 0 10px 30px rgba(30, 36, 60, 0.15);
+      font-size: 0.85rem; line-height: 1.4;
+    }
+    .float .ic {
+      width: 40px; height: 40px; border-radius: 50%; flex: none;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .float small { color: var(--muted); font-size: 0.78rem; }
+    .float.vision { top: 24px; left: 24px; }
+    .float.vision .ic { background: #BDF0CF; color: var(--green); }
+    .float.vision .label { color: var(--green); font-weight: 700; font-size: 0.75rem; letter-spacing: 0.03em; }
+    .float.scale { right: 24px; bottom: 24px; }
+    .float.scale .ic { background: #FFE1D8; color: var(--accent-deep); }
+    .float.scale .label { color: var(--accent-deep); font-weight: 700; font-size: 0.75rem; }
+    .float.scale .num { font-size: 1.4rem; font-weight: 800; }
+    .float.scale .num span { font-size: 0.9rem; font-weight: 500; color: var(--muted); }
+
+    /* ----- 문제 vs 솔루션 ----- */
+    .problems { margin-top: 64px; }
+    .problem { padding: 28px 24px 24px; display: flex; flex-direction: column; }
+    .problem .top { display: flex; justify-content: space-between; align-items: center; }
+    .tag {
+      display: inline-block; padding: 3px 10px; border-radius: 999px;
+      background: #FFE4DC; color: var(--accent-deep); font-size: 0.78rem; font-weight: 600;
+    }
+    .problem .top .icon { color: #E4A99A; }
+    .problem h3 { font-size: 1.3rem; margin: 16px 0 10px; line-height: 1.4; }
+    .problem > p { color: var(--muted); font-size: 0.95rem; flex: 1; }
+    .solution { margin-top: 24px; background: var(--green-soft); border-radius: 14px; padding: 16px; font-size: 0.93rem; }
+    .solution b { display: flex; align-items: center; gap: 6px; color: var(--green); font-size: 0.78rem; letter-spacing: 0.03em; margin-bottom: 6px; }
+    .solution b .icon { font-size: 18px; }
+
+    /* ----- 작동 단계 ----- */
+    .steps { margin-top: 64px; }
+    .step { padding: 36px; display: flex; flex-direction: column; }
+    .step .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .step .ic { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .step .no { font-size: 1.1rem; font-weight: 800; color: #9AA0B0; letter-spacing: 0.04em; }
+    .step h3 { font-size: 1.3rem; line-height: 1.4; margin-bottom: 10px; }
+    .step p { color: var(--muted); font-size: 0.93rem; flex: 1; }
+    .step .note {
+      margin-top: 28px; display: flex; align-items: center; gap: 10px;
+      background: var(--chip); border-radius: 12px; padding: 10px 14px;
+      font-size: 0.85rem; font-weight: 600;
+    }
+    .ic.coral { background: #FFE1D8; color: var(--accent-deep); }
+    .ic.mint { background: #BDF0CF; color: var(--green); }
+    .ic.gray { background: var(--chip); color: var(--ink); }
+
+    /* ----- 하드웨어 구조 ----- */
+    .anatomy { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center; }
+    .anatomy-shot { position: relative; padding: 8px; background: var(--bg-alt); border-radius: 24px; }
+    .anatomy-shot img { border-radius: 18px; width: 100%; }
+    .anatomy-shot .chip {
+      position: absolute; left: 24px; bottom: 24px;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #fff; border-radius: 999px; padding: 6px 14px;
+      font-size: 0.8rem; font-weight: 700;
+    }
+    .anatomy-shot .chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent-deep); }
+    .parts { display: grid; gap: 16px; }
+    .part { background: var(--bg-alt); border-radius: var(--radius); padding: 24px; }
+    .part .head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .part .no {
+      width: 32px; height: 32px; border-radius: 50%; flex: none;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700; color: #fff;
+    }
+    .part h3 { font-size: 1.3rem; letter-spacing: -0.01em; flex: 1; }
+    .part .spec { background: var(--chip); border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+    .part p { color: var(--muted); font-size: 0.93rem; }
+
+    /* ----- 플랫폼 & 성능 목표 ----- */
+    .specs { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center; }
+    .specs h2 { margin-bottom: 20px; }
+    .features { list-style: none; display: grid; gap: 16px; margin-top: 32px; }
+    .features li { display: flex; gap: 16px; background: var(--bg-alt); border-radius: 16px; padding: 18px 20px; }
+    .features .ic {
+      width: 44px; height: 44px; flex: none; border-radius: 10px; background: #fff;
+      display: flex; align-items: center; justify-content: center; color: var(--accent-deep);
+    }
+    .features h3 { font-size: 1.12rem; margin-bottom: 4px; }
+    .features p { color: var(--muted); font-size: 0.9rem; }
+    .spec-sheet { padding: 40px; box-shadow: 0 20px 50px rgba(30, 36, 60, 0.08); }
+    .spec-sheet .head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 2px solid var(--line); }
+    .spec-sheet h3 { font-size: 1.35rem; }
+    .pill { background: #BDF0CF; color: var(--green); border-radius: 999px; padding: 3px 10px; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+    .spec-sheet dl { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 32px; margin: 32px 0; }
+    .spec-sheet dt { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+    .spec-sheet dd { font-weight: 800; font-size: 1.2rem; margin-top: 4px; }
+    .spec-sheet dd small { display: block; font-weight: 400; font-size: 0.85rem; color: var(--muted); }
+    .notice { display: flex; align-items: center; gap: 14px; background: var(--chip); border-radius: 14px; padding: 14px 18px; font-size: 0.88rem; }
+    .notice .icon { color: var(--green); font-size: 26px; }
+    .notice b { display: block; font-size: 0.85rem; }
+
+    /* ----- 도입 효과(ROI) ----- */
+    .roi { margin-top: 64px; }
+    .roi-card { padding: 32px; }
+    .roi-card .num { font-size: clamp(1.9rem, 3vw, 2.4rem); font-weight: 800; letter-spacing: -0.02em; color: var(--accent); line-height: 1.2; }
+    .roi-card .num small { font-size: 1rem; font-weight: 700; }
+    .roi-card h3 { font-size: 1.1rem; margin: 12px 0 6px; }
+    .roi-card p { color: var(--muted); font-size: 0.88rem; }
+    .roi-card:nth-child(2) .num { color: var(--green); }
+    .roi-detail { margin-top: 32px; padding: 28px 32px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .roi-detail div { font-size: 0.9rem; color: var(--muted); }
+    .roi-detail b { display: block; color: var(--ink); font-size: 1.1rem; }
+    .footnote { margin-top: 20px; text-align: center; font-size: 0.82rem; color: var(--muted); }
+
+    /* ----- 도입 문의 CTA ----- */
+    .cta {
+      position: relative; overflow: hidden;
+      border-radius: 32px; padding: 96px;
+      background: radial-gradient(circle at 100% 100%, rgba(247, 116, 79, 0.35), transparent 40%),
+                  radial-gradient(circle at 0% 0%, rgba(46, 107, 74, 0.25), transparent 40%),
+                  #1E2129;
+      color: #fff; box-shadow: 0 30px 60px rgba(30, 36, 60, 0.2);
+    }
+    .cta .limited {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255, 255, 255, 0.1); border-radius: 999px; padding: 6px 14px;
+      font-size: 0.8rem; font-weight: 600;
+    }
+    .cta .limited::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+    .cta h2 { margin-top: 20px; max-width: 16em; font-size: clamp(1.8rem, 3.6vw, 2.8rem); }
+    .cta p { margin-top: 20px; color: #C9CBD4; max-width: 36em; font-size: 1.08rem; }
+    .cta .actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 32px; }
+    .cta .button.ghost { background: rgba(255, 255, 255, 0.1); color: #fff; box-shadow: none; }
+    .cta .button.ghost .icon { color: #8FE3B0; }
+    .cta ul { list-style: none; display: flex; flex-wrap: wrap; gap: 14px 28px; margin-top: 32px; font-size: 0.9rem; color: #C9CBD4; max-width: 40em; }
+    .cta li { display: flex; align-items: center; gap: 8px; }
+    .cta li .icon { color: #8FE3B0; font-size: 18px; }
+
+    /* ----- 하단 ----- */
+    footer { background: var(--bg-alt); padding: 96px 0 48px; }
+    .foot-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; }
+    footer .logo { margin-bottom: 20px; }
+    footer p, footer li { color: var(--muted); font-size: 0.95rem; }
+    footer h4 { font-size: 1rem; margin-bottom: 16px; }
+    footer ul { list-style: none; display: grid; gap: 8px; }
+    footer a:hover { color: var(--accent-deep); }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+    .tags span { display: inline-flex; align-items: center; gap: 4px; background: var(--chip); border-radius: 999px; padding: 4px 10px; font-size: 0.78rem; font-weight: 600; }
+    .tags .icon { font-size: 16px; color: var(--green); }
+    .bottom { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-top: 72px; font-size: 0.9rem; color: var(--muted); }
+
+    /* ----- 태블릿 ----- */
+    @media (max-width: 1024px) {
+      .nav ul { display: none; }
+      .hero, .anatomy, .specs { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; gap: 20px; }
+      .grid-4 { grid-template-columns: 1fr 1fr; gap: 20px; }
+      .foot-grid { grid-template-columns: 1fr 1fr; }
+      .cta { padding: 64px 40px; }
+    }
+
+    /* ----- 모바일 ----- */
+    @media (max-width: 640px) {
+      .wrap { padding: 0 16px; }
+      section { padding: 72px 0; }
+      .nav { height: 64px; }
+      .nav .button { padding: 8px 16px; font-size: 0.85rem; }
+      .logo { font-size: 1.1rem; }
+      .badge { border-radius: 16px; }
+      .badge .sep { display: none; }
+      .stats div { flex: 1 1 100%; }
+      .hero { padding-top: 32px; padding-bottom: 64px; gap: 40px; }
+      .float { position: static; margin-top: 12px; }
+      .split-head { flex-direction: column; align-items: flex-start; margin-bottom: 32px; }
+      .part .head { flex-wrap: wrap; }
+      .part h3 { flex-basis: calc(100% - 42px); font-size: 1.15rem; }
+      .part .spec { margin-left: 42px; }
+      .step, .spec-sheet { padding: 28px 24px; }
+      .spec-sheet dl { grid-template-columns: 1fr; }
+      .grid-4, .roi-detail { grid-template-columns: 1fr; }
+      .cta { padding: 48px 24px; border-radius: 24px; }
+      .foot-grid { grid-template-columns: 1fr; gap: 36px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== 상단 메뉴 ===== -->
+  <header>
+    <nav class="wrap nav">
+      <a class="logo" href="#top"><span class="mark"><span class="icon">pets</span></span>PawFeeder AI</a>
+      <ul>
+        <li><a href="#why">왜 필요한가?</a></li>
+        <li><a href="#how">작동 방식</a></li>
+        <li><a href="#tech">핵심 기술</a></li>
+        <li><a href="#specs">성능 목표</a></li>
+        <li><a href="#roi">도입 효과</a></li>
+      </ul>
+      <a class="button" href="#contact">도입 문의</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <!-- ===== 첫 화면 ===== -->
+    <div class="wrap hero">
+      <div>
+        <span class="badge">
+          <strong><span class="dot"></span>PHYSICAL AI PET FEEDER</strong>
+          <span class="sep"></span>
+          얼굴로 알아보고 무게로 확인하는 개체 맞춤 급식기
+        </span>
+        <h1>목걸이 태그 없이,<br>얼굴만 보고 <em>우리 아이 몫</em>을 정확히 급여합니다</h1>
+        <p class="tagline">카메라 기반 비접촉 개체 인식으로 등록된 반려동물에게만 맞춤 사료를 정량 지급하고, 개체별 실제 섭취량을 자동으로 기록합니다. 다견·다묘 가정과 위탁 케어 센터의 오급여 문제를 해결합니다.</p>
+        <div class="actions">
+          <a class="button" href="#contact"><span class="icon">mail</span>도입 문의하기</a>
+          <a class="button ghost" href="#how"><span class="icon">play_circle</span>작동 방식 보기</a>
+        </div>
+        <div class="stats">
+          <div><b><span class="icon">face</span>98.5%+</b>개체 식별 정확도</div>
+          <div><b><span class="icon">block</span>0.1% 이하</b>다른 개체 오급여율</div>
+          <div><b><span class="icon">bolt</span>1.2초 이내</b>접근 후 토출까지</div>
+        </div>
+        <p class="stats-note">※ 개발 목표치 기준</p>
+      </div>
+
+      <div class="hero-visual">
+        <img src="images/feeder-living-room.jpg" alt="거실에서 반려견과 반려묘가 PawFeeder AI 급식기 옆에서 밥을 먹는 모습">
+        <div class="float vision">
+          <span class="ic"><span class="icon">pets</span></span>
+          <div>
+            <span class="label">● VISION SENSOR ON</span><br>
+            <b>등록 개체 '초코' 인식 · 유사도 92%</b><br>
+            <small>인증 기준 85% 이상 → 급여 승인</small>
+          </div>
+        </div>
+        <div class="float scale">
+          <span class="ic"><span class="icon">scale</span></span>
+          <div>
+            <span class="label">로드셀 정량 토출</span><br>
+            <span class="num">25.0 <span>/ 25g</span></span><br>
+            <small>목표 오차 ±1.5g 이내</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 해결하려는 문제 ===== -->
+    <section class="alt" id="why">
+      <div class="wrap">
+        <div class="center">
+          <p class="eyebrow">Why Physical AI</p>
+          <h2>기존 자동 급식기는<br>'누가' 먹는지 모릅니다</h2>
+          <p class="lead">다견·다묘 가정이나 처방식·연령별 사료가 필요한 환경에서, 개체를 구분하지 못하는 급식기는 오급여와 건강 악화로 이어집니다.</p>
+        </div>
+
+        <div class="grid-3 problems">
+          <article class="card problem">
+            <div class="top"><span class="tag">기존의 한계 01</span><span class="icon">schedule</span></div>
+            <h3>타이머·중량 방식은 대상을 구분하지 못합니다</h3>
+            <p>시간과 양은 제어할 수 있지만 누가 먹는지는 알 수 없어, 식탐 많은 아이가 다른 아이의 처방식까지 먹어버립니다.</p>
+            <div class="solution">
+              <b><span class="icon">verified</span>PAWFEEDER AI 솔루션</b>
+              얼굴 인식으로 등록된 개체를 식별하고 급여 대상일 때만 급식구를 엽니다. 다른 개체가 다가오면 닫힌 상태를 유지합니다.
+            </div>
+          </article>
+          <article class="card problem">
+            <div class="top"><span class="tag">기존의 한계 02</span><span class="icon">sell</span></div>
+            <h3>RFID 태그는 늘 착용해야 합니다</h3>
+            <p>목걸이 태그를 잃어버리거나 아이가 거부하기도 하고, 접근 각도에 따라 인식률이 떨어지며 부품 추가로 원가도 올라갑니다.</p>
+            <div class="solution">
+              <b><span class="icon">verified</span>PAWFEEDER AI 솔루션</b>
+              태그도 칩도 필요 없는 100% 비접촉 인식. 표정·털·고개 각도·조명의 변화는 경량 딥러닝 모델이 처리합니다.
+            </div>
+          </article>
+          <article class="card problem">
+            <div class="top"><span class="tag">기존의 한계 03</span><span class="icon">help</span></div>
+            <h3>얼마나 먹었는지 알기 어렵습니다</h3>
+            <p>아이마다 너무 적게 또는 너무 많이 먹지는 않았는지, 개체별 식사량을 꾸준히 관찰하기가 어렵습니다.</p>
+            <div class="solution">
+              <b><span class="icon">verified</span>PAWFEEDER AI 솔루션</b>
+              식사 후 남은 무게를 재서 '실제 섭취량 = 지급량 − 잔여량'을 개체별로 자동 기록하고 일간·월간 그래프로 보여줍니다.
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 작동 방식: 감지 → 판단 → 행동 → 기록 ===== -->
+    <section id="how">
+      <div class="wrap">
+        <div class="center">
+          <p class="eyebrow green">How it Works</p>
+          <h2>다가오는 순간부터 기록까지,<br>스스로 보고 판단하고 움직입니다</h2>
+          <p class="lead">보호자가 반려동물의 얼굴 사진 3~5장과 개체별 급여 스케줄(사료량·시간)을 등록하면, 이후 과정은 급식기가 알아서 처리합니다.</p>
+        </div>
+
+        <div class="grid-3 steps">
+          <article class="card step">
+            <div class="top"><span class="ic mint"><span class="icon">sensors</span></span><span class="no">STEP 01</span></div>
+            <h3>접근 감지</h3>
+            <p>ToF·PIR 센서가 다가오는 물체를 감지하고, 30cm 이내로 들어오면 카메라가 촬영을 시작합니다. 평소에는 대기 상태로 전력을 아낍니다.</p>
+            <div class="note"><span class="icon">radar</span>30cm 접근 시 카메라 작동</div>
+          </article>
+          <article class="card step">
+            <div class="top"><span class="ic coral"><span class="icon">psychology</span></span><span class="no">STEP 02</span></div>
+            <h3>AI 개체 분석</h3>
+            <p>기기 안의 Edge AI가 ① 동물 감지 ② 얼굴 특징점 추출 ③ 등록된 개체와의 유사도 계산을 차례로 수행합니다.</p>
+            <div class="note"><span class="icon">memory</span>클라우드 없이 기기 내 추론</div>
+          </article>
+          <article class="card step">
+            <div class="top"><span class="ic gray"><span class="icon">fact_check</span></span><span class="no">STEP 03</span></div>
+            <h3>급여 여부 판단</h3>
+            <p>유사도 85% 이상의 등록 개체이고 급여 시간대라면 급여 명령을 만듭니다. 미등록·비대상 개체라면 급식구를 닫은 채 접근 경고를 남깁니다.</p>
+            <div class="note"><span class="icon">rule</span>인증 기준 유사도 85% 이상</div>
+          </article>
+          <article class="card step">
+            <div class="top"><span class="ic coral"><span class="icon">settings</span></span><span class="no">STEP 04</span></div>
+            <h3>정량 토출</h3>
+            <p>서보 모터가 출구 도어를 열고, 스텝 모터가 설정량(예: 25g)만큼 디스펜서를 회전시킵니다. 로드셀이 그릇 무게를 실시간으로 확인합니다.</p>
+            <div class="note"><span class="icon">scale</span>로드셀 피드백 정량 제어</div>
+          </article>
+          <article class="card step">
+            <div class="top"><span class="ic mint"><span class="icon">monitor_weight</span></span><span class="no">STEP 05</span></div>
+            <h3>섭취량 계산</h3>
+            <p>식사를 마치고 자리를 뜨면 남은 사료의 무게를 재서 개체별 실제 섭취량을 계산합니다.</p>
+            <div class="note"><span class="icon">calculate</span>섭취량 = 지급량 − 잔여량</div>
+          </article>
+          <article class="card step">
+            <div class="top"><span class="ic gray"><span class="icon">notifications</span></span><span class="no">STEP 06</span></div>
+            <h3>기록 & 알림</h3>
+            <p>데이터는 MQTT로 서버에 전송되고, 보호자는 푸시 알림과 일간·월간 섭취 그래프로 아이의 식사를 확인합니다.</p>
+            <div class="note"><span class="icon">insights</span>급여 완료·미섭취·사료 부족 알림</div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 하드웨어 구조 ===== -->
+    <section class="alt" id="tech">
+      <div class="wrap">
+        <div class="split-head">
+          <div>
+            <p class="eyebrow green">Inside the Machine</p>
+            <h2>피지컬 AI 하드웨어 구조</h2>
+          </div>
+          <p class="lead">경량 Edge AI와 정밀 센서, 구동 모터가 하나의 기기 안에서 감지 → 판단 → 행동을 완결합니다.</p>
+        </div>
+
+        <div class="anatomy">
+          <div class="anatomy-shot">
+            <img src="images/feeder-tech.jpg" alt="비전 카메라, 정밀 저울, 사료 토출 장치가 보이는 급식기 내부 구조 이미지">
+            <span class="chip">하드웨어 구성 이미지</span>
+          </div>
+
+          <div class="parts">
+            <article class="part">
+              <div class="head"><span class="no" style="background: var(--accent)">01</span><h3>RGB-IR 듀얼 비전 카메라</h3><span class="spec">2MP Global Shutter</span></div>
+              <p>야간 IR 조명 환경에서도 잔상 없이 움직이는 반려동물의 얼굴을 포착합니다. ToF 거리 센서가 접근을 감지할 때만 카메라를 깨워 전력을 절감합니다.</p>
+            </article>
+            <article class="part">
+              <div class="head"><span class="no" style="background: var(--green)">02</span><h3>On-Device Edge AI</h3><span class="spec">15 FPS 이상</span></div>
+              <p>ESP32-S3 또는 RK3566 칩에서 TensorFlow Lite Micro로 INT8 양자화 모델을 실행합니다. MobileNetV3-Small이 얼굴을 찾고 MobileFaceNet이 개체 특징을 비교합니다.</p>
+            </article>
+            <article class="part">
+              <div class="head"><span class="no" style="background: var(--accent-deep)">03</span><h3>로드셀 정량 토출 제어</h3><span class="spec">±1.5g 이내</span></div>
+              <p>로드셀 중량 피드백 루프로 서보·스텝 모터를 제어해 목표량만큼 정확히 토출하고, 식사가 끝나면 잔여량까지 측정합니다.</p>
+            </article>
+            <article class="part">
+              <div class="head"><span class="no" style="background: #BDF0CF; color: var(--green)">04</span><h3>이상 감지 & 오프라인 급여</h3><span class="spec">Safe-fail</span></div>
+              <p>사료 부족과 토출구 막힘(Jamming)을 감지해 예외 처리합니다. 네트워크가 끊겨도 기기에 저장된 스케줄과 Edge AI로 급여를 계속합니다.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 플랫폼 & 성능 목표 ===== -->
+    <section id="specs">
+      <div class="wrap specs">
+        <div>
+          <p class="eyebrow green">Edge-to-Cloud Platform</p>
+          <h2>기기부터 클라우드까지,<br>운영을 위한 플랫폼</h2>
+          <p class="lead">급여 이벤트·섭취량·사료 잔량·장치 상태가 실시간으로 동기화되어, 여러 대의 기기를 한 곳에서 관리할 수 있습니다.</p>
+          <ul class="features">
+            <li>
+              <span class="ic"><span class="icon">cloud_sync</span></span>
+              <div><h3>보안 실시간 동기화</h3><p>2.4GHz Wi-Fi와 MQTT over TLS로 AWS IoT Core에 연결되어 가벼운 데이터를 안전하게 전송합니다.</p></div>
+            </li>
+            <li>
+              <span class="ic"><span class="icon">dashboard</span></span>
+              <div><h3>관리자 웹 대시보드</h3><p>전체 기기 상태 모니터링, 통계 분석, OTA(무선) 펌웨어 업데이트 배포를 한 화면에서 처리합니다.</p></div>
+            </li>
+            <li>
+              <span class="ic"><span class="icon">database</span></span>
+              <div><h3>1년 이상 이력 보존</h3><p>장치 동작 로그, 인식 실패 로그, 섭취 이력을 최소 1년간 보존합니다. 장치 정보는 PostgreSQL, 섭취량·체중 시계열은 InfluxDB에 저장합니다.</p></div>
+            </li>
+            <li>
+              <span class="ic"><span class="icon">notifications_active</span></span>
+              <div><h3>모바일 푸시 알림</h3><p>Firebase Cloud Messaging으로 iOS·Android에 급여 완료, 미섭취, 사료 부족 알림을 실시간으로 보냅니다.</p></div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="card spec-sheet">
+          <div class="head"><h3>핵심 성능 목표</h3><span class="pill">개발 목표치</span></div>
+          <dl>
+            <div><dt>개체 식별 정확도</dt><dd>98.5% 이상<small>등록 개체 1,000회 접근 테스트 (주간·야간 포함)</small></dd></div>
+            <div><dt>오인식 급여율 (FAR)</dt><dd>0.1% 이하<small>다른 개체에게 사료가 잘못 지급되는 비율</small></dd></div>
+            <div><dt>접근 후 토출까지</dt><dd>1.2초 이내<small>PIR 감지부터 토출 모터 동작까지</small></dd></div>
+            <div><dt>사료 토출 오차</dt><dd>±1.5g 이내<small>목표 중량 대비 실제 토출량</small></dd></div>
+            <div><dt>Edge AI 추론 속도</dt><dd>15 FPS 이상<small>Micro NPU 런타임 기준</small></dd></div>
+            <div><dt>서버 통신 성공률</dt><dd>99.9% 이상<small>Wi-Fi 재접속 로직 포함 로그 전송</small></dd></div>
+          </dl>
+          <div class="notice">
+            <span class="icon">flag</span>
+            <div><b>1차 출시 지역: 대한민국</b>KC 인증 기준으로 출시를 준비하고 있습니다.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 도입 효과(ROI) ===== -->
+    <section class="alt" id="roi">
+      <div class="wrap">
+        <div class="center">
+          <p class="eyebrow">Business Value</p>
+          <h2>케어 센터에 도입하면,<br>7개월 안에 투자금을 회수합니다</h2>
+          <p class="lead">반려동물 50두를 수용하는 위탁 케어 센터에 급식기 50대를 도입하는 경우를 가정해 산정한 결과입니다.</p>
+        </div>
+
+        <div class="grid-4 roi">
+          <article class="card roi-card">
+            <div class="num">6.73<small>개월</small></div>
+            <h3>투자 회수 기간</h3>
+            <p>초기 투자비 ÷ 월 순 절감액</p>
+          </article>
+          <article class="card roi-card">
+            <div class="num">178<small>%</small></div>
+            <h3>연간 ROI</h3>
+            <p>연간 순 절감액 3,300만 원 기준</p>
+          </article>
+          <article class="card roi-card">
+            <div class="num">275<small>만 원</small></div>
+            <h3>월 순 절감액</h3>
+            <p>월 절감액 320만 원 − 월 운영비 45만 원</p>
+          </article>
+          <article class="card roi-card">
+            <div class="num">1,850<small>만 원</small></div>
+            <h3>초기 투자비</h3>
+            <p>기기 50대 × 25만 원 + AI 모델 튜닝·현장 설치</p>
+          </article>
+        </div>
+
+        <div class="card roi-detail">
+          <div><b>월 250만 원</b>수동 급여·배분 인건비 절감</div>
+          <div><b>월 70만 원</b>사료 오급여 및 손실 감소</div>
+          <div><b>월 45만 원</b>서버·통신비, 유지보수 충당금</div>
+        </div>
+        <p class="footnote">※ 가정에 기반한 추정치이며, 실제 효과는 운영 환경에 따라 달라질 수 있습니다.</p>
+      </div>
+    </section>
+
+    <!-- ===== 도입 문의 ===== -->
+    <section id="contact">
+      <div class="wrap">
+        <div class="cta">
+          <span class="limited">B2B 도입 상담</span>
+          <h2>다견·다묘 케어 현장에<br>개체 맞춤 급여를 도입하세요.</h2>
+          <p>위탁 케어 센터, 보호소, 다견·다묘 가정을 위한 도입 상담을 진행합니다. 운영 규모에 맞춘 기기 구성과 예상 절감 효과를 안내해 드립니다.</p>
+          <div class="actions">
+            <!-- 실제 문의 메일 주소로 바꿔 주세요: href="mailto:주소" -->
+            <a class="button" href="#contact"><span class="icon">mail</span>도입 상담 신청하기</a>
+            <a class="button ghost" href="#roi"><span class="icon">calculate</span>도입 효과 다시 보기</a>
+          </div>
+          <ul>
+            <li><span class="icon">check_circle</span>개체 등록·급여 스케줄 설정 지원</li>
+            <li><span class="icon">check_circle</span>관리자 대시보드·OTA 업데이트 제공</li>
+            <li><span class="icon">check_circle</span>기존 서비스 앱과 API 연동</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== 하단: 회사 정보 ===== -->
+  <footer>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div>
+          <a class="logo" href="#top"><span class="mark"><span class="icon">pets</span></span>PawFeeder AI</a>
+          <p>카메라 기반 비접촉 개체 인식과 로드셀 정량 제어를 결합한 피지컬 AI 반려동물 급식기. 개체별 맞춤 급여와 섭취 기록으로 반려동물의 건강 관리를 돕습니다.</p>
+          <div class="tags">
+            <span><span class="icon">face</span>비접촉 개체 인식</span>
+            <span><span class="icon">scale</span>정량 급여</span>
+            <span><span class="icon">wifi_off</span>오프라인 급여 모드</span>
+          </div>
+        </div>
+        <div>
+          <h4>제품</h4>
+          <ul>
+            <li><a href="#why">왜 필요한가?</a></li>
+            <li><a href="#how">작동 방식</a></li>
+            <li><a href="#tech">핵심 기술</a></li>
+            <li><a href="#specs">성능 목표</a></li>
+            <li><a href="#roi">도입 효과</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>회사 정보</h4>
+          <!-- 실제 회사 정보로 바꿔 주세요 -->
+          <ul>
+            <li>[회사명]</li>
+            <li>[대표 이메일]</li>
+            <li>[대표 전화번호]</li>
+            <li>[회사 주소]</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="bottom">
+        <span>© 2026 [회사명]. All rights reserved.</span>
+        <span>PawFeeder AI · 피지컬 AI 반려동물 급식기</span>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
