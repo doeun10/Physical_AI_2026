@@ -1,0 +1,301 @@
+<title>PawFeeder AI 전처리 파이프라인</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Noto+Sans+KR:wght@400;500;700;800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: problem chips → 7-step numbered flow grouped in 3 phases → 2 ordering principles. Tokens follow the Stitch "Warm Tech Pet Care" system. */
+:root {
+  --bg: #FAF8F5;
+  --surface: #F3EFEA;
+  --card: #FFFFFF;
+  --fg: #23272F;
+  --muted: #68707D;
+  --line: rgba(35, 39, 47, 0.08);
+  --accent: #F97352;
+  --accent-ink: #A8381C;
+  --accent-soft: #FAF2EE;
+  --sage: #4E8765;
+  --sage-soft: #EBF3EE;
+  --shadow: 0 4px 20px -2px rgba(35, 39, 47, 0.05), 0 2px 6px -1px rgba(249, 115, 82, 0.04);
+  --font-display: "Plus Jakarta Sans", "Noto Sans KR", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", "Noto Sans KR", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1A1C21; --surface: #23262D; --card: #2A2E36; --fg: #EEF0F4; --muted: #A3AAB6;
+    --line: rgba(238, 240, 244, 0.10); --accent: #FF8A6B; --accent-ink: #FFB4A2; --accent-soft: #3A2622;
+    --sage: #7CC39A; --sage-soft: #1F3329; --shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1A1C21; --surface: #23262D; --card: #2A2E36; --fg: #EEF0F4; --muted: #A3AAB6;
+  --line: rgba(238, 240, 244, 0.10); --accent: #FF8A6B; --accent-ink: #FFB4A2; --accent-soft: #3A2622;
+  --sage: #7CC39A; --sage-soft: #1F3329; --shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  padding-inline: 20px; padding-block: 0;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 96px; display: flex; flex-direction: column; gap: 64px; }
+
+/* Header */
+.head { display: flex; flex-direction: column; gap: 16px; max-width: 780px; }
+.eyebrow {
+  align-self: flex-start; display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border-radius: 9999px; background: var(--card); border: 1px solid var(--line);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: var(--muted);
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sage); box-shadow: 0 0 0 4px var(--sage-soft); }
+h2 {
+  margin: 0; font-family: var(--font-display); font-weight: 800;
+  font-size: clamp(30px, 4.2vw, 48px); line-height: 1.2; letter-spacing: -0.03em; text-wrap: balance;
+}
+h2 em { font-style: normal; color: var(--accent); }
+.sub { margin: 0; color: var(--muted); font-size: 18px; }
+.spec { display: flex; flex-wrap: wrap; gap: 8px; }
+.spec span {
+  font-family: var(--font-mono); font-size: 12.5px; padding: 4px 10px; border-radius: 8px;
+  background: var(--surface); color: var(--fg); font-variant-numeric: tabular-nums;
+}
+
+h3 {
+  margin: 0 0 20px; font-size: 13px; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--muted); text-transform: uppercase; display: flex; align-items: center; gap: 10px;
+}
+h3::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+/* Problems */
+.problems { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.problem {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 6px;
+}
+.problem svg { width: 22px; height: 22px; color: var(--accent); }
+.problem b { font-size: 15px; font-weight: 700; line-height: 1.35; }
+.problem small { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+
+/* Pipeline */
+.phases { display: grid; grid-template-columns: 2fr 2fr 3fr; gap: 16px; align-items: start; }
+.phase { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.phase-label {
+  display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700;
+  padding: 8px 14px; border-radius: 9999px; align-self: flex-start;
+}
+.phase-label i { font-style: normal; font-family: var(--font-mono); font-size: 11px; opacity: 0.75; }
+.p1 .phase-label { background: var(--sage-soft); color: var(--sage); }
+.p2 .phase-label { background: var(--surface); color: var(--fg); }
+.p3 .phase-label { background: var(--accent-soft); color: var(--accent-ink); }
+.phase-body { display: grid; gap: 12px; }
+.p1 .phase-body, .p2 .phase-body { grid-template-columns: 1fr 1fr; }
+.p3 .phase-body { grid-template-columns: 1fr 1fr 1fr; }
+
+.step {
+  position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 20px;
+  padding: 20px 18px 18px; box-shadow: var(--shadow);
+  display: flex; flex-direction: column; gap: 10px; min-width: 0;
+}
+.num {
+  font-family: var(--font-display); font-weight: 800; font-size: 40px; line-height: 1;
+  color: var(--accent); letter-spacing: -0.04em; font-variant-numeric: tabular-nums;
+}
+.step h4 { margin: 0; font-size: 17px; font-weight: 700; line-height: 1.35; letter-spacing: -0.01em; }
+.code {
+  align-self: flex-start; font-family: var(--font-mono); font-size: 11.5px;
+  padding: 3px 8px; border-radius: 6px; background: var(--surface); color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.why { margin: 0; font-size: 14px; line-height: 1.55; }
+.why b { color: var(--accent-ink); font-weight: 700; margin-right: 4px; }
+.fix {
+  margin-top: auto; align-self: flex-start; font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em;
+  padding: 4px 10px; border-radius: 9999px; background: var(--sage-soft); color: var(--sage);
+}
+.drop {
+  position: absolute; top: 18px; right: 16px; font-size: 10.5px; font-weight: 800; letter-spacing: 0.08em;
+  padding: 3px 8px; border-radius: 9999px; background: var(--accent-soft); color: var(--accent-ink);
+}
+.step .arrow {
+  position: absolute; right: -11px; top: 34px; width: 10px; height: 10px; z-index: 1;
+  border-top: 2px solid var(--accent); border-right: 2px solid var(--accent); transform: rotate(45deg);
+}
+.flowline { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; margin-top: 4px; }
+.flowline .bar { flex: 1; height: 2px; background: linear-gradient(90deg, var(--sage), var(--accent)); border-radius: 2px; }
+.flowline span { font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
+
+/* Principles */
+.principles { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.principle {
+  background: var(--surface); border-radius: 24px; padding: 28px; display: grid;
+  grid-template-columns: 52px 1fr; gap: 18px; align-items: start;
+}
+.icon { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; }
+.icon svg { width: 26px; height: 26px; }
+.principle.a .icon { background: var(--sage-soft); color: var(--sage); }
+.principle.b .icon { background: var(--accent-soft); color: var(--accent); }
+.principle h4 { margin: 0 0 6px; font-size: 20px; font-weight: 700; letter-spacing: -0.015em; }
+.principle p { margin: 0; color: var(--muted); font-size: 15px; }
+.principle .chain { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+.principle .chain span {
+  font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 9999px;
+  background: var(--card); border: 1px solid var(--line);
+}
+
+@media (max-width: 1080px) {
+  .phases { grid-template-columns: 1fr; }
+  .step .arrow { display: none; }
+}
+@media (max-width: 640px) {
+  .wrap { padding-block: 56px; gap: 48px; }
+  .p1 .phase-body, .p2 .phase-body, .p3 .phase-body, .principles { grid-template-columns: 1fr; }
+  .principle { grid-template-columns: 1fr; padding: 22px; }
+  .problems { grid-template-columns: 1fr 1fr; }
+}
+</style>
+
+<section class="wrap" id="preprocessing" aria-labelledby="pp-title">
+  <header class="head">
+    <span class="eyebrow"><span class="dot"></span>EDGE AI · PREPROCESSING</span>
+    <h2 id="pp-title">현장 맞춤형 <em>데이터 전처리</em> 파이프라인</h2>
+    <p class="sub">실제 가정 환경을 조사해 찾은 문제를 7단계로 정리했습니다. 각 단계는 엣지 NPU에서 실시간으로 동작하도록 순서를 맞췄습니다.</p>
+    <div class="spec"><span>RK3566 NPU</span><span>720p → 112×112</span><span>15 FPS</span><span>RGB / IR</span></div>
+  </header>
+
+  <div>
+    <h3>현장 조사로 찾은 문제</h3>
+    <div class="problems">
+      <div class="problem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2"/></svg>
+        <b>창문 역광</b><small>150~400 Lux, 얼굴이 실루엣처럼 어두움</small>
+      </div>
+      <div class="problem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <b>주/야간 IR 전환</b><small>RGB 3채널 ↔ IR 1채널</small>
+      </div>
+      <div class="problem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 7c6-4 12-4 18 0M3 17c6 4 12 4 18 0M7 3c-4 6-4 12 0 18M17 3c4 6 4 12 0 18"/></svg>
+        <b>120° 광각 왜곡</b><small>외곽으로 갈수록 얼굴이 휨</small>
+      </div>
+      <div class="problem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h10M2 12h14M4 16h10M18 7l3 5-3 5"/></svg>
+        <b>고개 털기</b><small>급식 중 모션블러 발생</small>
+      </div>
+      <div class="problem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 14h18l-2 5H5z"/><circle cx="12" cy="8" r="4"/></svg>
+        <b>그릇 테두리 가림</b><small>턱 아래가 잘려 보임</small>
+      </div>
+      <div class="problem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="9" r="2"/><circle cx="18" cy="9" r="2"/><circle cx="9.5" cy="5" r="2"/><circle cx="14.5" cy="5" r="2"/><path d="M12 12c-3 0-5 3-5 5.5S9 20 12 19s5 1 5-1.5S15 12 12 12z"/></svg>
+        <b>검은 단모종 · 장모종</b><small>닥스훈트 · 포메라니안</small>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <h3>처리 순서</h3>
+    <div class="phases">
+      <div class="phase p1">
+        <span class="phase-label">가벼운 필터 · 먼저 걸러내기 <i>1–2</i></span>
+        <div class="phase-body">
+          <article class="step">
+            <span class="num">1</span>
+            <h4>Grayscale 채널 통일</h4>
+            <span class="code">cv2.cvtColor</span>
+            <p class="why"><b>왜?</b>주간 RGB와 야간 IR 입력을 1채널로 맞춰 도메인 차이를 없앱니다.</p>
+            <span class="fix">해결 · 주/야간 전환</span>
+            <span class="arrow" aria-hidden="true"></span>
+          </article>
+          <article class="step">
+            <span class="drop">DROP</span>
+            <span class="num">2</span>
+            <h4>블러 프레임 기각</h4>
+            <span class="code">Laplacian Variance</span>
+            <p class="why"><b>왜?</b>흔들린 프레임은 추론 전에 버려 연산을 아끼고 오인식을 막습니다.</p>
+            <span class="fix">해결 · 모션블러</span>
+            <span class="arrow" aria-hidden="true"></span>
+          </article>
+        </div>
+      </div>
+
+      <div class="phase p2">
+        <span class="phase-label">형태 복원 · 영역 축소 <i>3–4</i></span>
+        <div class="phase-body">
+          <article class="step">
+            <span class="num">3</span>
+            <h4>광각 렌즈 왜곡 보정</h4>
+            <span class="code">cv2.undistort</span>
+            <p class="why"><b>왜?</b>휘어진 얼굴 좌표를 직선으로 펴서 특징점 위치를 정확하게 잡습니다.</p>
+            <span class="fix">해결 · 120° 광각</span>
+            <span class="arrow" aria-hidden="true"></span>
+          </article>
+          <article class="step">
+            <span class="num">4</span>
+            <h4>ROI 크롭 +15% 확장</h4>
+            <span class="code">BBox Expansion</span>
+            <p class="why"><b>왜?</b>그릇에 가린 턱과 이목구비를 잃지 않고, 이후 처리할 영역을 줄입니다.</p>
+            <span class="fix">해결 · 턱 가림</span>
+            <span class="arrow" aria-hidden="true"></span>
+          </article>
+        </div>
+      </div>
+
+      <div class="phase p3">
+        <span class="phase-label">무거운 연산 · 작은 이미지에만 <i>5–7</i></span>
+        <div class="phase-body">
+          <article class="step">
+            <span class="num">5</span>
+            <h4>CLAHE 국소 대비 향상</h4>
+            <span class="code">createCLAHE · 8×8 Tile</span>
+            <p class="why"><b>왜?</b>역광과 검은 털 속에 묻힌 눈·코 특징을 영역별로 살려냅니다.</p>
+            <span class="fix">해결 · 역광 / 검은 털</span>
+            <span class="arrow" aria-hidden="true"></span>
+          </article>
+          <article class="step">
+            <span class="num">6</span>
+            <h4>3×3 샤프닝</h4>
+            <span class="code">cv2.filter2D</span>
+            <p class="why"><b>왜?</b>장모종의 털 경계와 눈·코 윤곽을 선명하게 만듭니다.</p>
+            <span class="fix">해결 · 장모종</span>
+            <span class="arrow" aria-hidden="true"></span>
+          </article>
+          <article class="step">
+            <span class="num">7</span>
+            <h4>리사이즈 &amp; 정규화</h4>
+            <span class="code">INTER_AREA · 112×112</span>
+            <p class="why"><b>왜?</b>축소할 때 생기는 계단 현상 없이 NPU 입력 텐서를 만듭니다.</p>
+            <span class="fix">해결 · 엣지 HW 제약</span>
+          </article>
+        </div>
+      </div>
+    </div>
+    <div class="flowline" aria-hidden="true"><span>720p 원본</span><span class="bar"></span><span>112×112 NPU 입력</span></div>
+  </div>
+
+  <div>
+    <h3>왜 이 순서인가?</h3>
+    <div class="principles">
+      <div class="principle a">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h18l-7 8v6l-4 2v-8z"/></svg></span>
+        <div>
+          <h4>싸고 버릴 수 있는 필터는 앞에</h4>
+          <p>불필요한 프레임을 초반에 기각하면 뒤 단계 연산을 통째로 아낄 수 있습니다.</p>
+          <div class="chain"><span>1 Grayscale</span><span>2 블러 기각</span></div>
+        </div>
+      </div>
+      <div class="principle b">
+        <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg></span>
+        <div>
+          <h4>비싼 필터는 크롭 뒤에</h4>
+          <p>ROI로 이미지를 작게 줄인 뒤 CLAHE와 샤프닝을 적용해 15 FPS를 유지합니다.</p>
+          <div class="chain"><span>4 ROI 크롭</span><span>5 CLAHE</span><span>6 샤프닝</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
