@@ -54,7 +54,7 @@
     <div class="pf-panel" role="dialog" aria-label="PawFeeder AI 챗봇">
       <div class="pf-head"><strong>PawFeeder AI에게 물어보세요</strong><button type="button" class="pf-close" aria-label="닫기">×</button></div>
       <div class="pf-body"></div>
-      <form><input type="text" placeholder="예: 얼굴 인식은 어떻게 동작해?" maxlength="500" aria-label="질문 입력"><button type="submit">전송</button></form>
+      <form><input type="text" placeholder="궁금한 점을 입력해 주세요" maxlength="500" aria-label="질문 입력"><button type="submit">전송</button></form>
     </div>
     <button type="button" class="pf-launcher" aria-label="챗봇 열기">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
@@ -80,25 +80,41 @@
 
   addMsg("안녕하세요! PawFeeder AI 제품, 기술, 모델 조사 내용에 대해 궁금한 점을 물어보세요.", "pf-bot");
 
-  // ----- 추천 질문 (누르면 바로 질문) -----
+  // ----- 추천 질문 (누르면 바로 질문). 처음엔 앞의 4개, 답변 뒤엔 아직 안 물어본 것 중 3개 -----
   const SUGGESTIONS = [
-    "얼굴 인식은 어떻게 동작해?",
-    "여러 마리를 어떻게 구분해?",
-    "사료 정량 오차는 얼마야?",
-    "네트워크가 끊기면 어떻게 돼?",
-    "어떤 비전 모델을 비교했어?",
-    "전처리는 어떤 순서로 해?",
+    "얼굴 인식은 어떻게 동작하나요?",
+    "여러 마리를 어떻게 구분하나요?",
+    "사료 정량 오차는 얼마인가요?",
+    "네트워크가 끊기면 어떻게 되나요?",
+    "어떤 비전 모델을 비교했나요?",
+    "전처리는 어떤 순서로 하나요?",
+    "새 반려동물은 어떻게 등록하나요?",
+    "야간에도 인식이 되나요?",
+    "등록되지 않은 동물이 오면 어떻게 되나요?",
+    "어떤 하드웨어를 사용하나요?",
+    "개체 식별 정확도 목표는 얼마인가요?",
+    "도입하면 비용을 얼마나 절감할 수 있나요?",
   ];
-  const suggest = document.createElement("div");
-  suggest.className = "pf-suggest";
-  for (const q of SUGGESTIONS) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.textContent = q;
-    b.addEventListener("click", () => ask(q));
-    suggest.appendChild(b);
+  const asked = new Set();
+  let suggest = null;
+
+  function showSuggestions(count) {
+    suggest?.remove();
+    const picks = SUGGESTIONS.filter((q) => !asked.has(q)).slice(0, count);
+    if (!picks.length) { suggest = null; return; }
+    suggest = document.createElement("div");
+    suggest.className = "pf-suggest";
+    for (const q of picks) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = q;
+      b.addEventListener("click", () => ask(q));
+      suggest.appendChild(b);
+    }
+    body.appendChild(suggest);
+    body.scrollTop = body.scrollHeight;
   }
-  body.appendChild(suggest);
+  showSuggestions(4);
 
   // ----- 열기/닫기 (마우스 올리면 열림, 벗어나면 잠시 후 닫힘. 입력 중이면 유지) -----
   const open = () => { clearTimeout(closeTimer); root.classList.add("open"); };
@@ -125,7 +141,8 @@
     if (!question || busy) return;
     if (!ENDPOINT) { addMsg("챗봇 서버 주소(data-endpoint)가 설정되지 않았어요.", "pf-err"); return; }
 
-    suggest.remove(); // 첫 질문 후에는 추천 질문 숨김
+    suggest?.remove();
+    asked.add(question);
     addMsg(question, "pf-user");
     input.value = "";
     busy = true;
@@ -144,7 +161,7 @@
       typing.remove();
       if (!res.ok || data.error) throw new Error(data.error || `서버 오류 (${res.status})`);
 
-      const answer = String(data.answer || "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/`([^`]+)`/g, "$1").replace(/^\s*\* /gm, "• ");
+      const answer = String(data.answer || "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/`([^`]+)`/g, "$1").replace(/^\s*[*-] /gm, "• ");
       const el = addMsg(answer, "pf-bot");
       const srcs = [...new Set((data.sources || []).map((s) => s.source))];
       if (srcs.length) {
@@ -160,6 +177,7 @@
     } finally {
       busy = false;
       sendBtn.disabled = false;
+      showSuggestions(3);
       body.scrollTop = body.scrollHeight;
     }
   }

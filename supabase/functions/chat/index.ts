@@ -30,7 +30,9 @@ const SYSTEM_PROMPT = `너는 "PawFeeder AI" 제품 홈페이지의 안내 챗�
 규칙:
 - 반드시 아래 [참고 자료]에 있는 내용만 근거로 한국어로 답한다.
 - 참고 자료에 없는 내용은 지어내지 말고 "제공된 자료에서는 확인되지 않습니다"라고 말한다.
-- 답은 짧고 친절하게, 필요하면 글머리표로 정리한다.
+- 존댓말(~습니다, ~해요)로 답한다.
+- 답은 핵심만 짧게: 3~4문장 또는 글머리표 3~4개 이내로 쓰고, 300자를 넘기지 않는다.
+- 인사말이나 "제공된 자료에 따르면" 같은 군더더기 없이 바로 답한다.
 - 수치, 모델 이름, 가격 등은 자료에 적힌 그대로 쓴다.`;
 
 type Match = { id: number; source: string; title: string | null; content: string; similarity: number };
@@ -99,7 +101,7 @@ async function generateAnswer(question: string, matches: Match[], history: Turn[
 
   let res: Response | null = null;
   for (const model of [CHAT_MODEL, ...FALLBACK_MODELS.filter((m) => m !== CHAT_MODEL)]) {
-    const generationConfig: Record<string, unknown> = { temperature: 0.3, maxOutputTokens: 2048 };
+    const generationConfig: Record<string, unknown> = { temperature: 0.3, maxOutputTokens: 1024 };
     if (THINKING_OFF[model]) generationConfig.thinkingConfig = THINKING_OFF[model];
     res = await fetch(`${GEMINI}/${model}:generateContent`, {
       method: "POST",
