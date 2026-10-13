@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>RAG 문서 업로드 도구</title>
+<style>
+  :root { --bg:#FAF8F5; --card:#fff; --text:#181c23; --muted:#58423c; --line:#e6ded8; --primary:#a8381c; --ok:#306949; --err:#ba1a1a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.6 system-ui, "Noto Sans KR", sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:32px 16px 64px; }
+  h1 { font-size:24px; margin:0 0 4px; }
+  p.lead { color:var(--muted); margin:0 0 24px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:16px; }
+  .card h2 { font-size:16px; margin:0 0 12px; }
+  label { display:block; font-weight:600; font-size:13px; margin:12px 0 4px; }
+  input[type=text], input[type=password] { width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:8px; font:inherit; }
+  .hint { font-size:12px; color:var(--muted); margin-top:4px; }
+  button { background:var(--primary); color:#fff; border:0; border-radius:8px; padding:10px 16px; font:inherit; font-weight:600; cursor:pointer; }
+  button.secondary { background:#fff; color:var(--primary); border:1px solid var(--primary); }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  table { width:100%; border-collapse:collapse; font-size:13px; margin-top:12px; }
+  th, td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+  #log { background:#1c1c19; color:#e6e2dd; border-radius:8px; padding:12px; font:12px/1.5 ui-monospace, Consolas, monospace; height:260px; overflow:auto; white-space:pre-wrap; margin-top:12px; }
+  .ok { color:#98d4ad; } .err { color:#ffb4a2; }
+</style>
+</head>
+<body>
+<main>
+  <h1>RAG 문서 업로드 도구</h1>
+  <p class="lead">홈페이지와 보고서를 잘게 나눠 Gemini로 임베딩한 뒤 Supabase <code>documents</code> 테이블에 저장합니다. 입력한 키는 이 브라우저 안에서만 쓰이고 저장되지 않습니다.</p>
+
+  <section class="card">
+    <h2>1. 키 입력</h2>
+    <label for="sbUrl">Supabase Project URL</label>
+    <input id="sbUrl" type="text" placeholder="https://xxxxxxxx.supabase.co">
+    <label for="sbKey">Supabase service_role 키 (또는 secret 키)</label>
+    <input id="sbKey" type="password" placeholder="eyJ... 또는 sb_secret_...">
+    <div class="hint">Project Settings → API Keys. 이 키는 절대 홈페이지 코드에 넣지 마세요.</div>
+    <label for="gmKey">Gemini API 키</label>
+    <input id="gmKey" type="password" placeholder="AIza...">
+    <div class="hint">Google AI Studio → Get API key</div>
+  </section>
+
+  <section class="card">
+    <h2>2. 문서 선택</h2>
+    <div class="row">
+      <input id="files" type="file" multiple accept=".html,.htm,.md,.txt">
+      <button id="loadDefault" class="secondary" type="button">기본 문서 자동 불러오기</button>
+    </div>
+    <div class="hint">권장 파일: <code>index.html</code>, <code>PRD/PRD.md</code>, <code>report/*.md</code>. 자동 불러오기는 GitHub Pages 등 웹 서버에서 열었을 때만 동작합니다. (파일을 더블클릭해 열었다면 직접 선택하세요)</div>
+    <table id="preview" hidden>
+      <thead><tr><th>파일</th><th>글자 수</th><th>조각 수</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>3. 업로드</h2>
+    <label class="row" style="font-weight:400"><input id="wipe" type="checkbox"> 업로드 전에 기존 데이터를 모두 삭제 (파일 이름을 바꿨거나 빼고 싶을 때)</label>
+    <div class="hint">체크하지 않아도 같은 파일 이름의 기존 조각은 지우고 새로 넣습니다.</div>
+    <div class="row" style="margin-top:12px"><button id="upload" type="button" disabled>임베딩 &amp; 업로드</button></div>
+    <div id="log"></div>
+  </section>
+</main>
+
+<script>
+const EMBED_MODEL = "gemini-embedding-001";
+const EMBED_DIM = 768;          // supabase/schema.sql 의 vector(768) 과 같아야 함
+const CHUNK_SIZE = 900;         // 조각 최대 글자 수
+const CHUNK_OVERLAP = 150;      // 앞 조각과 겹치는 글자 수
+const BATCH = 20;               // 한 번에 임베딩할 조각 수
+const DEFAULT_DOCS = [
+  "../index.html",
+  "../PRD/PRD.md",
+  "../report/vision_models.md",
+  "../report/model.md",
+  "../report/prosss.md",
+  "../report/checklist.md",
+  "../report/listcheck.md",
+];
+
+const $ = (id) => document.getElementById(id);
+let docs = []; // { source, chunks: [{title, content}] , length }
+
+function log(msg, cls) {
+  const line = document.createElement("div");
+  if (cls) line.className = cls;
+  line.textContent = msg;
+  $("log").appendChild(line);
+  $("log").scrollTop = $("log").scrollHeight;
+}
+
+// ---------- 텍스트 추출 ----------
+function htmlToUnits(html) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  doc.querySelectorAll("script, style, svg, noscript, img, picture, video, iframe, input, button, link, meta").forEach((el) => el.remove());
+
+  const blocks = "p,div,li,h1,h2,h3,h4,h5,h6,section,article,header,footer,nav,ul,ol,blockquote,figure,figcaption,pre,dl,dt,dd";
+  doc.querySelectorAll("td, th").forEach((el) => el.append(" | "));
+  doc.querySelectorAll("tr, br").forEach((el) => el.after("\n"));
+  doc.querySelectorAll(blocks).forEach((el) => { el.before("\n"); el.after("\n"); });
+
+  const textOf = (el) => el.textContent.split("\n").map((s) => s.replace(/\s+/g, " ").trim()).filter(Boolean).join("\n");
+
+  // 가장 바깥 section/header/footer 단위로 나눔
+  const units = [];
+  const roots = [...doc.body.querySelectorAll("section, header, footer")].filter((el) => !el.parentElement.closest("section, header, footer"));
+  for (const el of roots) {
+    const h = el.querySelector("h1, h2, h3");
+    const title = h ? h.textContent.replace(/\s+/g, " ").trim() : (el.id || el.tagName.toLowerCase());
+    const text = textOf(el);
+    if (text) units.push({ title, text });
+    el.remove();
+  }
+  const rest = textOf(doc.body);
+  if (rest) units.push({ title: doc.title || "기타", text: rest });
+  return units;
+}
+
+function markdownToUnits(md) {
+  const units = [];
+  const stack = [];
+  let buf = [];
+  const flush = () => {
+    const text = buf.join("\n").trim();
+    if (text) units.push({ title: stack.filter(Boolean).join(" > "), text });
+    buf = [];
+  };
+  let inCode = false;
+  for (const line of md.replace(/\r\n/g, "\n").split("\n")) {
+    if (line.trim().startsWith("```")) inCode = !inCode;
+    const m = !inCode && line.match(/^(#{1,4})\s+(.*)$/);
+    if (m) {
+      flush();
+      const level = m[1].length;
+      stack.length = level - 1;
+      stack[level - 1] = m[2].trim();
+      continue;
+    }
+    buf.push(line);
+  }
+  flush();
+  return units;
+}
+
+function splitText(text) {
+  if (text.length <= CHUNK_SIZE) return [text];
+  const lines = text.split("\n");
+  const chunks = [];
+  let cur = "";
+  for (let line of lines) {
+    // 한 줄이 너무 길면 문장 단위로 자름
+    while (line.length > CHUNK_SIZE) {
+      let cut = line.lastIndexOf(". ", CHUNK_SIZE);
+      if (cut < CHUNK_SIZE / 2) cut = CHUNK_SIZE; else cut += 1;
+      if (cur) { chunks.push(cur); cur = ""; }
+      chunks.push(line.slice(0, cut).trim());
+      line = line.slice(cut).trim();
+    }
+    if (cur && cur.length + line.length + 1 > CHUNK_SIZE) {
+      chunks.push(cur);
+      const tail = cur.slice(-CHUNK_OVERLAP);
+      const nl = tail.indexOf("\n");
+      cur = (nl >= 0 ? tail.slice(nl + 1) : "") ;
+    }
+    cur = cur ? cur + "\n" + line : line;
+  }
+  if (cur.trim()) chunks.push(cur);
+  return chunks;
+}
+
+function buildDoc(source, raw) {
+  const isHtml = /\.html?$/i.test(source);
+  const units = isHtml ? htmlToUnits(raw) : markdownToUnits(raw);
+  const chunks = [];
+  for (const u of units) {
+    for (const c of splitText(u.text)) {
+      if (c.trim().length >= 30) chunks.push({ title: u.title || source, content: c.trim() });
+    }
+  }
+  return { source, chunks, length: units.reduce((n, u) => n + u.text.length, 0) };
+}
+
+function showPreview() {
+  const tbody = $("preview").querySelector("tbody");
+  tbody.innerHTML = "";
+  for (const d of docs) {
+    const tr = document.createElement("tr");
+    [d.source, d.length.toLocaleString(), d.chunks.length].forEach((v) => {
+      const td = document.createElement("td"); td.textContent = v; tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  }
+  $("preview").hidden = docs.length === 0;
+  $("upload").disabled = docs.length === 0;
+  const total = docs.reduce((n, d) => n + d.chunks.length, 0);
+  log(`문서 ${docs.length}개, 조각 ${total}개 준비됨`);
+}
+
+$("files").addEventListener("change", async (e) => {
+  docs = [];
+  for (const f of e.target.files) {
+    const source = f.webkitRelativePath || f.name;
+    docs.push(buildDoc(source, await f.text()));
+  }
+  showPreview();
+});
+
+$("loadDefault").addEventListener("click", async () => {
+  docs = [];
+  for (const path of DEFAULT_DOCS) {
+    try {
+      const res = await fetch(path, { cache: "no-store" });
+      if (!res.ok) throw new Error(res.status);
+      docs.push(buildDoc(path.replace(/^\.\.\//, ""), await res.text()));
+    } catch (err) {
+      log(`불러오기 실패: ${path} (${err.message || err}) — 파일 선택을 이용하세요`, "err");
+    }
+  }
+  showPreview();
+});
+
+// ---------- 업로드 ----------
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function sbHeaders(key, extra = {}) {
+  const h = { apikey: key, "Content-Type": "application/json", ...extra };
+  if (key.startsWith("eyJ")) h.Authorization = `Bearer ${key}`; // 예전 JWT 형식 키
+  return h;
+}
+
+async function sbFetch(url, key, opts) {
+  const res = await fetch(url, { ...opts, headers: sbHeaders(key, opts.headers) });
+  if (!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
+  return res;
+}
+
+async function embedBatch(items, gmKey) {
+  const body = {
+    requests: items.map((c) => ({
+      model: `models/${EMBED_MODEL}`,
+      content: { parts: [{ text: c.content }] },
+      title: c.title,
+      taskType: "RETRIEVAL_DOCUMENT",
+      outputDimensionality: EMBED_DIM,
+    })),
+  };
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${EMBED_MODEL}:batchEmbedContents`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": gmKey },
+      body: JSON.stringify(body),
+    });
+    if (res.status === 429 || res.status >= 500) {
+      const wait = 15000 * (attempt + 1);
+      log(`  Gemini 요청 제한(${res.status}) — ${wait / 1000}초 후 재시도`);
+      await sleep(wait);
+      continue;
+    }
+    if (!res.ok) throw new Error(`Gemini ${res.status}: ${await res.text()}`);
+    const data = await res.json();
+    return data.embeddings.map((e) => e.values);
+  }
+  throw new Error("Gemini 요청 제한이 계속됩니다. 잠시 후 다시 시도하세요.");
+}
+
+$("upload").addEventListener("click", async () => {
+  const sbUrl = $("sbUrl").value.trim().replace(/\/+$/, "");
+  const sbKey = $("sbKey").value.trim();
+  const gmKey = $("gmKey").value.trim();
+  if (!sbUrl || !sbKey || !gmKey) return log("키 3개를 모두 입력하세요.", "err");
+
+  $("upload").disabled = true;
+  try {
+    const table = `${sbUrl}/rest/v1/documents`;
+    if ($("wipe").checked) {
+      await sbFetch(`${table}?id=gte.0`, sbKey, { method: "DELETE" });
+      log("기존 데이터 전체 삭제 완료");
+    }
+    for (const d of docs) {
+      log(`▶ ${d.source} (${d.chunks.length}조각)`);
+      await sbFetch(`${table}?source=eq.${encodeURIComponent(d.source)}`, sbKey, { method: "DELETE" });
+      for (let i = 0; i < d.chunks.length; i += BATCH) {
+        const part = d.chunks.slice(i, i + BATCH);
+        const vectors = await embedBatch(part, gmKey);
+        const rows = part.map((c, j) => ({ source: d.source, title: c.title, content: c.content, embedding: vectors[j] }));
+        await sbFetch(table, sbKey, { method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify(rows) });
+        log(`  ${Math.min(i + BATCH, d.chunks.length)}/${d.chunks.length} 저장`);
+        await sleep(500);
+      }
+    }
+    log("✔ 업로드 완료! 이제 챗봇에 질문해 보세요.", "ok");
+  } catch (err) {
+    log(`✖ ${err.message || err}`, "err");
+  } finally {
+    $("upload").disabled = false;
+  }
+});
+</script>
+</body>
+</html>
