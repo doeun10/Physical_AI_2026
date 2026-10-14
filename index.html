@@ -797,42 +797,6 @@
 <p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">AI가 "누구인지" 판단하고, 제어 칩이 "정확히 25g"을 실행합니다. 각 부품의 전압, 전류, 통신 방식과 부품끼리 어떻게 연결되는지 정리했습니다.</p>
 </div>
 
-<!-- SBC vs MCU -->
-<div class="mb-space-2xl">
-<p class="text-center font-label-badge text-label-badge text-tertiary uppercase tracking-widest mb-4">두뇌는 두 개: SBC + MCU</p>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
-<div class="flex flex-col p-space-lg rounded-2xl bg-white border border-outline-variant/30 shadow-sm">
-<div class="flex items-center justify-between mb-3">
-<span class="font-label-badge text-label-badge font-bold text-secondary uppercase">SBC · AI 담당 · 뇌</span>
-<span class="material-symbols-outlined text-[24px] text-secondary">memory</span>
-</div>
-<h4 class="font-headline-md text-[20px] font-bold text-on-surface mb-1">Rockchip RK3566</h4>
-<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed mb-3">CPU, RAM, 저장장치가 기판 한 장에 있는 작은 컴퓨터입니다. Linux로 동작하고 NPU(약 0.8 TOPS)로 얼굴 인식을 처리합니다.</p>
-<ul class="list-disc pl-4 space-y-1 font-body-sm text-[13px] text-on-surface-variant">
-<li>카메라 영상 받기 (MIPI CSI-2)</li>
-<li>AI 얼굴 검출 → 특징 추출 → 등록 개체와 비교</li>
-<li>서버 통신 (Wi-Fi), 초기 설정 (Bluetooth)</li>
-</ul>
-<p class="mt-auto pt-4 font-body-sm text-[12px] text-outline">5V · 평상시 0.5~1A / 최대 2A</p>
-</div>
-<div class="flex flex-col p-space-lg rounded-2xl bg-white border border-outline-variant/30 shadow-sm">
-<div class="flex items-center justify-between mb-3">
-<span class="font-label-badge text-label-badge font-bold text-primary-container uppercase">MCU · 제어 담당 · 척수</span>
-<span class="material-symbols-outlined text-[24px] text-primary-container">developer_board</span>
-</div>
-<h4 class="font-headline-md text-[20px] font-bold text-on-surface mb-1">Espressif ESP32-S3</h4>
-<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed mb-3">CPU, 메모리, 입출력 핀이 칩 하나에 들어간 제어용 칩입니다. OS 없이 동작해서 모터 타이밍을 정확하게 지킵니다.</p>
-<ul class="list-disc pl-4 space-y-1 font-body-sm text-[13px] text-on-surface-variant">
-<li>스텝 모터, 서보 모터 구동</li>
-<li>거리, 무게, 시각, 움직임 센서 측정</li>
-<li>LCD 표시, 버튼 입력</li>
-</ul>
-<p class="mt-auto pt-4 font-body-sm text-[12px] text-outline">3.3V · 평상시 40~100mA / 최대 250mA</p>
-</div>
-</div>
-<p class="text-center font-body-sm text-[12px] text-outline mt-3">MCU만 쓰면 AI 성능이 부족하고, SBC만 쓰면 Linux 때문에 모터 타이밍이 흔들립니다. 그래서 역할을 나눠 둘 다 씁니다.</p>
-</div>
-
 <!-- Relationship diagram -->
 <div class="mb-space-2xl">
 <p class="text-center font-label-badge text-label-badge text-tertiary uppercase tracking-widest mb-4">하드웨어 부품 관계도</p>
@@ -921,7 +885,7 @@
 
 <!-- power -->
 <rect x="40" y="890" width="1120" height="100" rx="18" fill="#ffffff" stroke="#8b716b" stroke-dasharray="6 5"/>
-<text x="64" y="922" font-size="16" font-weight="800" fill="#181c23">⚡ 전원 · 12V 어댑터 하나를 세 가지 전압으로 나눔</text>
+<text x="64" y="922" font-size="16" font-weight="800" fill="#181c23">⚡ 전원 · 12V 어댑터 하나를 세 가지 전압으로 나눔 · 최대 약 34W → 12V 4A(48W) 어댑터</text>
 <rect x="64" y="938" width="340" height="38" rx="10" fill="#ebedf9"/><text x="80" y="963" font-size="14" fill="#181c23"><tspan font-weight="800">12V</tspan>  어댑터 → TMC2209 (스텝 모터)</text>
 <rect x="420" y="938" width="360" height="38" rx="10" fill="#ebedf9"/><text x="436" y="963" font-size="14" fill="#181c23"><tspan font-weight="800">5V</tspan>  벅 컨버터 → RK3566, 서보, IR LED, HX711</text>
 <rect x="796" y="938" width="340" height="38" rx="10" fill="#ebedf9"/><text x="812" y="963" font-size="14" fill="#181c23"><tspan font-weight="800">3.3V</tspan>  LDO → ESP32-S3, 센서, LCD, RTC</text>
@@ -934,9 +898,13 @@
 </div>
 </div>
 
-<!-- Parts table -->
-<div class="mb-space-2xl">
-<p class="text-center font-label-badge text-label-badge text-tertiary uppercase tracking-widest mb-4">부품 15종: 전압 · 전류 · 통신 방식</p>
+<!-- Parts / communication tabs -->
+<div>
+<div class="flex justify-center gap-2 mb-4" role="tablist">
+<button type="button" data-hw-tab="parts" class="px-4 py-2 rounded-full text-[14px] font-bold bg-on-surface text-white">부품 15종 사양</button>
+<button type="button" data-hw-tab="comm" class="px-4 py-2 rounded-full text-[14px] font-bold bg-white border border-outline-variant/50 text-on-surface-variant">통신 방식 비교</button>
+</div>
+<div data-hw-panel="parts">
 <div class="overflow-x-auto rounded-2xl border border-outline-variant/30 bg-white">
 <table class="w-full min-w-[820px] text-left font-body-sm text-[13px]">
 <thead class="bg-surface-container-low text-on-surface">
@@ -963,10 +931,7 @@
 </div>
 <p class="text-center font-body-sm text-[12px] text-outline mt-3">모델명은 시중에서 구하기 쉬운 대표 부품이며, 전압·전류는 데이터시트의 일반적인 값입니다.</p>
 </div>
-
-<!-- Communication methods -->
-<div class="mb-space-2xl">
-<p class="text-center font-label-badge text-label-badge text-tertiary uppercase tracking-widest mb-4">기기 밖 통신 방식 비교</p>
+<div data-hw-panel="comm" class="hidden">
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-sm">
 <div class="flex flex-col p-space-md rounded-2xl bg-white border-2 border-secondary/50">
 <div class="flex items-center justify-between mb-2"><h4 class="font-label-lg text-label-lg font-bold text-on-surface">Wi-Fi</h4><span class="px-2 py-0.5 rounded-full bg-secondary text-white font-bold text-[11px]">사용</span></div>
@@ -990,37 +955,8 @@
 </div>
 </div>
 </div>
-
-<!-- Power budget -->
-<div>
-<p class="text-center font-label-badge text-label-badge text-tertiary uppercase tracking-widest mb-4">최대 소비 전력</p>
-<div class="flex flex-col md:flex-row items-stretch gap-space-sm">
-<div class="flex-1 p-space-md rounded-2xl bg-white border border-outline-variant/30 text-center">
-<p class="font-label-badge text-label-badge text-outline uppercase">12V 레일</p>
-<p class="font-headline-lg text-[26px] font-bold text-on-surface leading-tight mt-1">18.0W</p>
-<p class="font-body-sm text-[12px] text-on-surface-variant">스텝 모터 1.5A</p>
-</div>
-<div class="flex-1 p-space-md rounded-2xl bg-white border border-outline-variant/30 text-center">
-<p class="font-label-badge text-label-badge text-outline uppercase">5V 레일</p>
-<p class="font-headline-lg text-[26px] font-bold text-on-surface leading-tight mt-1">15.0W</p>
-<p class="font-body-sm text-[12px] text-on-surface-variant">RK3566 2A, 서보 0.7A, IR LED 0.3A</p>
-</div>
-<div class="flex-1 p-space-md rounded-2xl bg-white border border-outline-variant/30 text-center">
-<p class="font-label-badge text-label-badge text-outline uppercase">3.3V 레일</p>
-<p class="font-headline-lg text-[26px] font-bold text-on-surface leading-tight mt-1">1.2W</p>
-<p class="font-body-sm text-[12px] text-on-surface-variant">ESP32-S3, LCD, 센서</p>
-</div>
-<div class="flex-1 p-space-md rounded-2xl bg-inverse-surface text-center">
-<p class="font-label-badge text-label-badge text-primary-fixed uppercase">합계 → 어댑터</p>
-<p class="font-headline-lg text-[26px] font-bold text-white leading-tight mt-1">약 34W</p>
-<p class="font-body-sm text-[12px] text-white/70">약 40% 여유를 두어 12V 4A(48W)</p>
-</div>
-</div>
-<p class="text-center font-body-sm text-[12px] text-outline mt-3">서보와 스텝 모터는 동시에 돌리지 않고 순서대로 구동해 최대 전류를 낮춥니다.</p>
-<div class="flex justify-center mt-space-md">
-<a class="inline-flex items-center gap-1.5 px-space-lg py-space-sm rounded-full border border-secondary/40 text-secondary font-label-lg text-label-lg hover:bg-secondary-container/40 transition-colors" href="https://github.com/doeun10/Physical_AI_2026/blob/main/report/hardware_parts.md" target="_blank" rel="noopener">
-<span class="material-symbols-outlined text-[18px]">description</span>전체 하드웨어 보고서 보기</a>
-</div>
+<p class="text-right mt-2"><a class="font-body-sm text-[11px] text-outline hover:text-secondary underline" href="https://github.com/doeun10/Physical_AI_2026/blob/main/report/hardware_parts.md" target="_blank" rel="noopener">보고서 원문</a></p>
+<script>document.querySelectorAll('[data-hw-tab]').forEach(function(b){b.addEventListener('click',function(){var t=b.dataset.hwTab;document.querySelectorAll('[data-hw-tab]').forEach(function(x){var on=x===b;x.classList.toggle('bg-on-surface',on);x.classList.toggle('text-white',on);x.classList.toggle('bg-white',!on);x.classList.toggle('border',!on);x.classList.toggle('text-on-surface-variant',!on)});document.querySelectorAll('[data-hw-panel]').forEach(function(p){p.classList.toggle('hidden',p.dataset.hwPanel!==t)})})});</script>
 </div>
 
 </div>
