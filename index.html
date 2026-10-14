@@ -835,100 +835,102 @@
 
 <!-- Relationship diagram -->
 <div class="mb-space-2xl">
-<p class="text-center font-label-badge text-label-badge text-tertiary uppercase tracking-widest mb-4">부품 관계도</p>
-<div class="rounded-3xl bg-white border border-outline-variant/30 shadow-sm p-space-md md:p-space-xl">
+<p class="text-center font-label-badge text-label-badge text-tertiary uppercase tracking-widest mb-4">하드웨어 부품 관계도</p>
+<div class="rounded-3xl bg-white border border-outline-variant/30 shadow-sm p-space-md md:p-space-lg overflow-x-auto">
+<svg viewBox="0 0 1200 1010" class="w-full min-w-[900px] h-auto" role="img" aria-label="하드웨어 부품 관계도: 스마트폰과 클라우드 서버가 RK3566과 무선으로 연결되고, RK3566은 카메라와 ESP32-S3에 연결되며, ESP32-S3가 센서와 구동부를 제어합니다." font-family="Plus Jakarta Sans, Pretendard, 'Malgun Gothic', sans-serif">
+<defs>
+<marker id="hwArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8b716b"/></marker>
+<marker id="hwArrowG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#306949"/></marker>
+</defs>
 
-<div class="flex flex-wrap justify-center gap-x-space-md gap-y-2 mb-space-lg font-body-sm text-[12px] text-on-surface-variant">
-<span class="inline-flex items-center gap-1.5"><span class="px-2 py-0.5 rounded-full bg-secondary-container/60 text-secondary font-bold">무선</span>기기 밖 통신</span>
-<span class="inline-flex items-center gap-1.5"><span class="px-2 py-0.5 rounded-full bg-primary-container/15 text-primary font-bold">유선</span>기기 안 통신</span>
-<span class="inline-flex items-center gap-1.5"><span class="px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-bold">전원</span>전압 공급</span>
-</div>
+<!-- zone labels -->
+<text x="20" y="28" font-size="14" font-weight="700" fill="#8b716b">기기 밖</text>
+<line x1="20" y1="160" x2="1180" y2="160" stroke="#dfc0b8" stroke-width="2" stroke-dasharray="8 6"/>
+<text x="20" y="188" font-size="14" font-weight="700" fill="#8b716b">기기 안</text>
 
-<!-- external -->
-<p class="font-label-badge text-label-badge text-outline uppercase tracking-widest mb-2">기기 밖</p>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm">
-<div class="flex flex-col items-center text-center">
-<div class="w-full flex items-center gap-3 p-space-md rounded-2xl bg-surface-container-low">
-<span class="material-symbols-outlined text-[28px] text-on-surface-variant">smartphone</span>
-<div class="text-left"><p class="font-label-lg text-label-lg font-bold text-on-surface">사용자 스마트폰 (앱)</p><p class="font-body-sm text-[12px] text-on-surface-variant">처음 설치할 때 Wi-Fi 정보 전달</p></div>
-</div>
-<span class="material-symbols-outlined text-outline text-[22px] mt-1">arrow_downward</span>
-<span class="px-2.5 py-1 rounded-full bg-secondary-container/60 text-secondary font-bold text-[12px]">Bluetooth (BLE) · 초기 설정 1회</span>
-<span class="material-symbols-outlined text-outline text-[22px]">arrow_downward</span>
-</div>
-<div class="flex flex-col items-center text-center">
-<div class="w-full flex items-center gap-3 p-space-md rounded-2xl bg-surface-container-low">
-<span class="material-symbols-outlined text-[28px] text-on-surface-variant">cloud</span>
-<div class="text-left"><p class="font-label-lg text-label-lg font-bold text-on-surface">클라우드 서버 (AWS IoT Core)</p><p class="font-body-sm text-[12px] text-on-surface-variant">섭취 기록 저장, 푸시 알림, 펌웨어 업데이트</p></div>
-</div>
-<span class="material-symbols-outlined text-outline text-[22px] mt-1">swap_vert</span>
-<span class="px-2.5 py-1 rounded-full bg-secondary-container/60 text-secondary font-bold text-[12px]">Wi-Fi 2.4GHz · MQTT over TLS</span>
-<span class="material-symbols-outlined text-outline text-[22px]">swap_vert</span>
-</div>
-</div>
+<!-- external devices -->
+<rect x="70" y="45" width="300" height="76" rx="16" fill="#f1f3fe" stroke="#dfc0b8"/>
+<text x="220" y="78" text-anchor="middle" font-size="18" font-weight="700" fill="#181c23">📱 사용자 스마트폰 (앱)</text>
+<text x="220" y="104" text-anchor="middle" font-size="13" fill="#58423c">처음 설치할 때 Wi-Fi 정보 전달</text>
 
-<!-- SBC row -->
-<p class="font-label-badge text-label-badge text-outline uppercase tracking-widest mt-space-md mb-2">기기 안</p>
-<div class="flex flex-col md:flex-row items-stretch md:items-center gap-2 md:gap-space-sm">
-<div class="md:w-1/3 flex items-center gap-3 p-space-md rounded-2xl bg-surface-container-low">
-<span class="material-symbols-outlined text-[28px] text-on-surface-variant">photo_camera</span>
-<div><p class="font-label-lg text-label-lg font-bold text-on-surface">카메라</p><p class="font-body-sm text-[12px] text-on-surface-variant">2MP RGB-IR 글로벌 셔터</p></div>
-</div>
-<div class="flex md:flex-col items-center justify-center gap-1">
-<span class="px-2.5 py-1 rounded-full bg-primary-container/15 text-primary font-bold text-[12px] whitespace-nowrap">MIPI CSI-2 · SCCB</span>
-<span class="material-symbols-outlined text-outline text-[22px] rotate-90 md:rotate-0">arrow_forward</span>
-</div>
-<div class="flex-1 p-space-md rounded-2xl border-2 border-secondary bg-secondary-container/20">
-<div class="flex items-center gap-2"><span class="material-symbols-outlined text-[24px] text-secondary">memory</span><p class="font-label-lg text-label-lg font-bold text-on-surface">[SBC] RK3566 · AI 담당</p></div>
-<p class="font-body-sm text-[12px] text-on-surface-variant mt-1">NPU 얼굴 인식 · Wi-Fi/BT 모듈 내장</p>
-</div>
-</div>
+<rect x="830" y="45" width="300" height="76" rx="16" fill="#f1f3fe" stroke="#dfc0b8"/>
+<text x="980" y="78" text-anchor="middle" font-size="18" font-weight="700" fill="#181c23">☁️ 클라우드 서버</text>
+<text x="980" y="104" text-anchor="middle" font-size="13" fill="#58423c">AWS IoT Core · 기록 저장, 알림, OTA</text>
 
-<div class="flex flex-col items-center my-1">
-<span class="material-symbols-outlined text-outline text-[22px]">swap_vert</span>
-<span class="px-2.5 py-1 rounded-full bg-primary-container/15 text-primary font-bold text-[12px]">UART · 명령 "A에게 25g" / 결과 "토출 완료 24.8g"</span>
-<span class="material-symbols-outlined text-outline text-[22px]">swap_vert</span>
-</div>
+<!-- SBC -->
+<rect x="420" y="215" width="360" height="96" rx="18" fill="#eaf8ef" stroke="#306949" stroke-width="2.5"/>
+<text x="600" y="252" text-anchor="middle" font-size="20" font-weight="800" fill="#306949">[SBC] RK3566 · AI 담당</text>
+<text x="600" y="280" text-anchor="middle" font-size="13" fill="#58423c">NPU 얼굴 인식 · Wi-Fi/BT 모듈 내장 · 5V</text>
 
-<div class="p-space-md rounded-2xl border-2 border-primary-container bg-primary-container/10 text-center">
-<div class="flex items-center justify-center gap-2"><span class="material-symbols-outlined text-[24px] text-primary-container">developer_board</span><p class="font-label-lg text-label-lg font-bold text-on-surface">[MCU] ESP32-S3 · 제어 담당</p></div>
-<p class="font-body-sm text-[12px] text-on-surface-variant mt-1">무선은 SBC가 맡으므로 Wi-Fi/BLE는 끔</p>
-</div>
+<!-- phone -> SBC (BLE) -->
+<path d="M220,121 L220,263 L414,263" fill="none" stroke="#306949" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#hwArrowG)"/>
+<rect x="95" y="186" width="250" height="30" rx="15" fill="#b1edc5"/>
+<text x="220" y="206" text-anchor="middle" font-size="13" font-weight="700" fill="#306949">① Bluetooth (BLE) · 초기 설정 1회</text>
 
-<div class="grid grid-cols-1 md:grid-cols-2 gap-space-sm mt-space-sm">
-<div class="rounded-2xl bg-surface-container-low p-space-md">
-<p class="flex items-center gap-1.5 font-label-lg text-label-lg font-bold text-on-surface mb-3"><span class="material-symbols-outlined text-[20px] text-secondary">sensors</span>입력 (센서) → MCU</p>
-<ul class="space-y-2 font-body-sm text-[13px] text-on-surface-variant">
-<li class="flex items-start gap-2"><span class="shrink-0 w-[92px] px-2 py-0.5 rounded-full bg-primary-container/15 text-primary font-bold text-[11px] text-center">I2C</span><span><b class="text-on-surface">VL53L1X</b> 접근 거리 (30cm)</span></li>
-<li class="flex items-start gap-2"><span class="shrink-0 w-[92px] px-2 py-0.5 rounded-full bg-primary-container/15 text-primary font-bold text-[11px] text-center">I2C</span><span><b class="text-on-surface">VL53L0X</b> 사료통 잔량</span></li>
-<li class="flex items-start gap-2"><span class="shrink-0 w-[92px] px-2 py-0.5 rounded-full bg-primary-container/15 text-primary font-bold text-[11px] text-center">I2C</span><span><b class="text-on-surface">DS3231</b> 시각 유지 (RTC)</span></li>
-<li class="flex items-start gap-2"><span class="shrink-0 w-[92px] px-2 py-0.5 rounded-full bg-primary-container/15 text-primary font-bold text-[11px] text-center">GPIO</span><span><b class="text-on-surface">PIR</b> 움직임 감지</span></li>
-<li class="flex items-start gap-2"><span class="shrink-0 w-[92px] px-2 py-0.5 rounded-full bg-primary-container/15 text-primary font-bold text-[11px] text-center">GPIO</span><span><b class="text-on-surface">버튼</b> 화면 켜기, 수동 급여</span></li>
-<li class="flex items-start gap-2"><span class="shrink-0 w-[92px] px-2 py-0.5 rounded-full bg-primary-container/15 text-primary font-bold text-[11px] text-center">2선 시리얼</span><span><b class="text-on-surface">HX711</b> ← 아날로그 ← <b class="text-on-surface">로드셀</b> (무게)</span></li>
-</ul>
-</div>
-<div class="rounded-2xl bg-surface-container-low p-space-md">
-<p class="flex items-center gap-1.5 font-label-lg text-label-lg font-bold text-on-surface mb-3"><span class="material-symbols-outlined text-[20px] text-primary-container">settings</span>MCU → 출력 (구동·표시)</p>
-<ul class="space-y-2 font-body-sm text-[13px] text-on-surface-variant">
-<li class="flex items-start gap-2"><span class="shrink-0 w-[92px] px-2 py-0.5 rounded-full bg-primary-container/15 text-primary font-bold text-[11px] text-center">STEP/DIR</span><span><b class="text-on-surface">TMC2209</b> → <b class="text-on-surface">스텝 모터</b> (사료 토출)</span></li>
-<li class="flex items-start gap-2"><span class="shrink-0 w-[92px] px-2 py-0.5 rounded-full bg-primary-container/15 text-primary font-bold text-[11px] text-center">UART · DIAG</span><span>TMC2209 설정, 토출구 막힘 감지</span></li>
-<li class="flex items-start gap-2"><span class="shrink-0 w-[92px] px-2 py-0.5 rounded-full bg-primary-container/15 text-primary font-bold text-[11px] text-center">PWM 50Hz</span><span><b class="text-on-surface">서보 모터</b> (그릇 덮개)</span></li>
-<li class="flex items-start gap-2"><span class="shrink-0 w-[92px] px-2 py-0.5 rounded-full bg-primary-container/15 text-primary font-bold text-[11px] text-center">PWM</span><span><b class="text-on-surface">IR LED</b> (야간 조명, MOSFET 경유)</span></li>
-<li class="flex items-start gap-2"><span class="shrink-0 w-[92px] px-2 py-0.5 rounded-full bg-primary-container/15 text-primary font-bold text-[11px] text-center">SPI · PWM</span><span><b class="text-on-surface">TFT LCD</b> (상태 표시, 백라이트)</span></li>
-</ul>
-</div>
-</div>
+<!-- cloud <-> SBC (Wi-Fi) -->
+<path d="M980,127 L980,263 L786,263" fill="none" stroke="#306949" stroke-width="2.5" stroke-dasharray="7 5" marker-start="url(#hwArrowG)" marker-end="url(#hwArrowG)"/>
+<rect x="845" y="186" width="270" height="30" rx="15" fill="#b1edc5"/>
+<text x="980" y="206" text-anchor="middle" font-size="13" font-weight="700" fill="#306949">② Wi-Fi 2.4GHz · MQTT over TLS</text>
+
+<!-- camera -->
+<rect x="70" y="355" width="250" height="72" rx="16" fill="#f1f3fe" stroke="#dfc0b8"/>
+<text x="195" y="386" text-anchor="middle" font-size="17" font-weight="700" fill="#181c23">📷 카메라</text>
+<text x="195" y="410" text-anchor="middle" font-size="13" fill="#58423c">2MP RGB-IR 글로벌 셔터</text>
+<path d="M320,391 L500,391 L500,317" fill="none" stroke="#8b716b" stroke-width="2.5" marker-end="url(#hwArrow)"/>
+<rect x="335" y="400" width="150" height="44" rx="12" fill="#fde7e1"/>
+<text x="410" y="418" text-anchor="middle" font-size="12" font-weight="700" fill="#a8381c">MIPI CSI-2 (영상)</text>
+<text x="410" y="435" text-anchor="middle" font-size="12" font-weight="700" fill="#a8381c">SCCB (설정)</text>
+
+<!-- SBC <-> MCU (UART) -->
+<path d="M600,317 L600,449" fill="none" stroke="#8b716b" stroke-width="2.5" marker-start="url(#hwArrow)" marker-end="url(#hwArrow)"/>
+<rect x="618" y="350" width="300" height="56" rx="12" fill="#fde7e1"/>
+<text x="768" y="372" text-anchor="middle" font-size="13" font-weight="700" fill="#a8381c">③ UART</text>
+<text x="768" y="394" text-anchor="middle" font-size="12" fill="#58423c">명령 "A에게 25g" / 결과 "토출 완료 24.8g"</text>
+
+<!-- MCU -->
+<rect x="420" y="455" width="360" height="90" rx="18" fill="#fff1ec" stroke="#f97352" stroke-width="2.5"/>
+<text x="600" y="492" text-anchor="middle" font-size="20" font-weight="800" fill="#a8381c">[MCU] ESP32-S3 · 제어 담당</text>
+<text x="600" y="519" text-anchor="middle" font-size="13" fill="#58423c">모터·센서·화면 실시간 제어 · 3.3V</text>
+
+<!-- MCU <-> panels -->
+<path d="M300,598 L300,500 L414,500" fill="none" stroke="#8b716b" stroke-width="2.5" marker-end="url(#hwArrow)"/>
+<path d="M786,500 L900,500 L900,592" fill="none" stroke="#8b716b" stroke-width="2.5" marker-end="url(#hwArrow)"/>
+
+<!-- input panel -->
+<rect x="40" y="598" width="520" height="262" rx="18" fill="#f1f3fe" stroke="#dfc0b8"/>
+<text x="64" y="630" font-size="16" font-weight="800" fill="#181c23">입력 (센서) → MCU</text>
+<g font-size="14" fill="#181c23">
+<rect x="64" y="646" width="104" height="26" rx="13" fill="#fde7e1"/><text x="116" y="664" text-anchor="middle" font-size="12" font-weight="700" fill="#a8381c">I2C</text><text x="184" y="664"><tspan font-weight="700">VL53L1X</tspan> 접근 거리 (30cm)</text>
+<rect x="64" y="680" width="104" height="26" rx="13" fill="#fde7e1"/><text x="116" y="698" text-anchor="middle" font-size="12" font-weight="700" fill="#a8381c">I2C</text><text x="184" y="698"><tspan font-weight="700">VL53L0X</tspan> 사료통 잔량</text>
+<rect x="64" y="714" width="104" height="26" rx="13" fill="#fde7e1"/><text x="116" y="732" text-anchor="middle" font-size="12" font-weight="700" fill="#a8381c">I2C</text><text x="184" y="732"><tspan font-weight="700">DS3231</tspan> 시각 유지 (RTC)</text>
+<rect x="64" y="748" width="104" height="26" rx="13" fill="#fde7e1"/><text x="116" y="766" text-anchor="middle" font-size="12" font-weight="700" fill="#a8381c">GPIO</text><text x="184" y="766"><tspan font-weight="700">PIR</tspan> 움직임 감지</text>
+<rect x="64" y="782" width="104" height="26" rx="13" fill="#fde7e1"/><text x="116" y="800" text-anchor="middle" font-size="12" font-weight="700" fill="#a8381c">GPIO</text><text x="184" y="800"><tspan font-weight="700">버튼</tspan> 화면 켜기, 수동 급여</text>
+<rect x="64" y="816" width="104" height="26" rx="13" fill="#fde7e1"/><text x="116" y="834" text-anchor="middle" font-size="12" font-weight="700" fill="#a8381c">2선 시리얼</text><text x="184" y="834"><tspan font-weight="700">HX711</tspan> ← 아날로그 ← <tspan font-weight="700">4점 로드셀</tspan> (무게)</text>
+</g>
+
+<!-- output panel -->
+<rect x="640" y="598" width="520" height="262" rx="18" fill="#f1f3fe" stroke="#dfc0b8"/>
+<text x="664" y="630" font-size="16" font-weight="800" fill="#181c23">MCU → 출력 (구동·표시)</text>
+<g font-size="14" fill="#181c23">
+<rect x="664" y="646" width="104" height="26" rx="13" fill="#fde7e1"/><text x="716" y="664" text-anchor="middle" font-size="12" font-weight="700" fill="#a8381c">STEP/DIR</text><text x="784" y="664"><tspan font-weight="700">TMC2209</tspan> → <tspan font-weight="700">스텝 모터</tspan> (사료 토출)</text>
+<rect x="664" y="686" width="104" height="26" rx="13" fill="#fde7e1"/><text x="716" y="704" text-anchor="middle" font-size="12" font-weight="700" fill="#a8381c">UART · DIAG</text><text x="784" y="704">TMC2209 설정, 토출구 막힘 감지</text>
+<rect x="664" y="726" width="104" height="26" rx="13" fill="#fde7e1"/><text x="716" y="744" text-anchor="middle" font-size="12" font-weight="700" fill="#a8381c">PWM 50Hz</text><text x="784" y="744"><tspan font-weight="700">서보 모터</tspan> (그릇 덮개 개폐)</text>
+<rect x="664" y="766" width="104" height="26" rx="13" fill="#fde7e1"/><text x="716" y="784" text-anchor="middle" font-size="12" font-weight="700" fill="#a8381c">PWM</text><text x="784" y="784"><tspan font-weight="700">IR LED</tspan> (야간 조명, MOSFET 경유)</text>
+<rect x="664" y="806" width="104" height="26" rx="13" fill="#fde7e1"/><text x="716" y="824" text-anchor="middle" font-size="12" font-weight="700" fill="#a8381c">SPI · PWM</text><text x="784" y="824"><tspan font-weight="700">TFT LCD</tspan> (상태 표시, 백라이트)</text>
+</g>
 
 <!-- power -->
-<div class="mt-space-sm rounded-2xl border border-dashed border-outline-variant p-space-md">
-<p class="flex items-center gap-1.5 font-label-lg text-label-lg font-bold text-on-surface mb-3"><span class="material-symbols-outlined text-[20px] text-tertiary">bolt</span>전원 · 12V 어댑터 하나를 세 가지 전압으로 나눔</p>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-2 font-body-sm text-[13px] text-on-surface-variant">
-<div class="p-3 rounded-xl bg-surface-container-low"><span class="px-2 py-0.5 rounded-full bg-surface-container font-bold text-on-surface text-[12px]">12V</span><p class="mt-1.5">어댑터 직결 → TMC2209 (스텝 모터)</p></div>
-<div class="p-3 rounded-xl bg-surface-container-low"><span class="px-2 py-0.5 rounded-full bg-surface-container font-bold text-on-surface text-[12px]">5V</span><p class="mt-1.5">벅 컨버터 → RK3566, 서보, IR LED, HX711</p></div>
-<div class="p-3 rounded-xl bg-surface-container-low"><span class="px-2 py-0.5 rounded-full bg-surface-container font-bold text-on-surface text-[12px]">3.3V</span><p class="mt-1.5">LDO → ESP32-S3, 센서, LCD, RTC</p></div>
+<rect x="40" y="890" width="1120" height="100" rx="18" fill="#ffffff" stroke="#8b716b" stroke-dasharray="6 5"/>
+<text x="64" y="922" font-size="16" font-weight="800" fill="#181c23">⚡ 전원 · 12V 어댑터 하나를 세 가지 전압으로 나눔</text>
+<rect x="64" y="938" width="340" height="38" rx="10" fill="#ebedf9"/><text x="80" y="963" font-size="14" fill="#181c23"><tspan font-weight="800">12V</tspan>  어댑터 → TMC2209 (스텝 모터)</text>
+<rect x="420" y="938" width="360" height="38" rx="10" fill="#ebedf9"/><text x="436" y="963" font-size="14" fill="#181c23"><tspan font-weight="800">5V</tspan>  벅 컨버터 → RK3566, 서보, IR LED, HX711</text>
+<rect x="796" y="938" width="340" height="38" rx="10" fill="#ebedf9"/><text x="812" y="963" font-size="14" fill="#181c23"><tspan font-weight="800">3.3V</tspan>  LDO → ESP32-S3, 센서, LCD, RTC</text>
+</svg>
+<div class="flex flex-wrap justify-center gap-x-space-md gap-y-2 mt-space-sm font-body-sm text-[12px] text-on-surface-variant">
+<span class="inline-flex items-center gap-1.5"><span class="inline-block w-6 border-t-2 border-dashed border-secondary"></span>무선 (기기 밖)</span>
+<span class="inline-flex items-center gap-1.5"><span class="inline-block w-6 border-t-2 border-outline"></span>유선 (기기 안)</span>
+<span class="inline-flex items-center gap-1.5"><span class="px-2 py-0.5 rounded-full bg-[#fde7e1] text-primary font-bold">I2C</span>선 위·옆의 글자 = 통신 방식</span>
 </div>
-</div>
-
 </div>
 </div>
 
