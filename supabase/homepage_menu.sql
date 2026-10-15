@@ -16,12 +16,12 @@ left join public.doc_menu_map s on s.source = d.source and s.section_title = d.t
 left join public.doc_menu_map f on f.source = d.source and f.section_title is null
 order by coalesce(s.menu_order, f.menu_order, 99), d.source, d.id;
 
-create or replace view public."01_제품소개"     with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '제품 소개';
-create or replace view public."02_피지컬AI기술" with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '피지컬 AI 기술';
-create or replace view public."03_왜필요한가"   with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '왜 필요한가?';
-create or replace view public."04_제품스펙"     with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '제품 스펙';
-create or replace view public."05_하드웨어"     with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '하드웨어';
-create or replace view public."06_데이터전처리" with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '데이터 전처리';
-create or replace view public."07_AI모델"       with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = 'AI 모델';
-create or replace view public."08_추론엔진"     with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '추론 엔진';
-create or replace view public."09_모델조사"     with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '모델 조사';
+create or replace view public.overview      with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '제품 소개';
+create or replace view public.technology    with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '피지컬 AI 기술';
+create or replace view public.motivation    with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '왜 필요한가?';
+create or replace view public.specs         with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '제품 스펙';
+create or replace view public.hardware      with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '하드웨어';
+create or replace view public.preprocessing with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '데이터 전처리';
+create or replace view public.model         with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = 'AI 모델';
+create or replace view public.inference     with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '추론 엔진';
+create or replace view public.research      with (security_invoker = true) as select "문서", "섹션", "내용", id from public.docs_by_menu where "메뉴" = '모델 조사';
